@@ -760,6 +760,8 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
   .kpi-num{font-size:24px;}
   /* ── PO STATUS KPI STRIP: 2-col on mobile ── */
   #psKpiStrip{grid-template-columns:repeat(2,1fr)!important;}
+  .gd-kpi-5col{grid-template-columns:repeat(2,1fr)!important;}
+  .gd-kpi-5col>div{min-width:0;}
 
   /* ── MODALS: full-width on mobile ── */
   .modal,.mismatch-modal,.rec-edit-modal{
@@ -1223,7 +1225,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
     <button class="btn btn-ghost btn-xs" onclick="clearPSFilters()">✕ Clear</button>
     <span id="ps-count" style="font-size:11px;color:var(--ink3);margin-left:4px"></span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px" id="psKpiStrip"></div>
+  <div style="display:block;margin-bottom:14px" id="psKpiStrip"></div>
   <div class="ps-sheet-wrap">
     <div class="ps-sheet-toolbar">
       <span class="ps-sheet-title">PO Status Register</span>
@@ -1268,14 +1270,25 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
   <div class="pg-hd">
     <div><div class="pg-title">📊 Date-wise GRN Status Dashboard</div><div class="pg-sub">Vehicle-wise inward · GRN accomplishment · TAT analysis</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <input class="field-input" id="gdDateFrom" type="text" placeholder="From (DD/MM/YYYY)" style="width:145px;padding:6px 10px;font-size:11px" oninput="renderGRNDash()">
-      <input class="field-input" id="gdDateTo"   type="text" placeholder="To (DD/MM/YYYY)"   style="width:145px;padding:6px 10px;font-size:11px" oninput="renderGRNDash()">
-      <button class="btn btn-ghost btn-xs" onclick="document.getElementById('gdDateFrom').value='';document.getElementById('gdDateTo').value='';renderGRNDash()">x Clear</button>
+      <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;box-shadow:var(--sh)">
+        <span style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:.5px;white-space:nowrap">FROM</span>
+        <select id="gdDateFrom" class="field-select" style="border:none;box-shadow:none;padding:3px 6px;font-size:11px;font-family:var(--font-mono);min-width:130px;background:transparent" onchange="renderGRNDash()">
+          <option value="">All dates</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;box-shadow:var(--sh)">
+        <span style="font-size:10px;color:var(--ink3);font-weight:700;letter-spacing:.5px;white-space:nowrap">TO</span>
+        <select id="gdDateTo" class="field-select" style="border:none;box-shadow:none;padding:3px 6px;font-size:11px;font-family:var(--font-mono);min-width:130px;background:transparent" onchange="renderGRNDash()">
+          <option value="">All dates</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-xs" onclick="document.getElementById('gdDateFrom').value='';document.getElementById('gdDateTo').value='';renderGRNDash()">✕ Clear</button>
       <button class="btn btn-lime btn-sm" onclick="renderGRNDash()" style="font-weight:800">Refresh</button>
-      <button class="btn btn-ghost btn-sm" onclick="exportGRNDash()">Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportGRNDash()">⬇ CSV</button>
+      <button class="btn btn-lime btn-sm" onclick="exportGRNDashImage()" style="font-weight:800">🖼 Report</button>
     </div>
   </div>
-  <div id="gdKpiStrip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px"></div>
+  <div id="gdKpiStrip" style="margin-bottom:14px;width:100%;min-width:0;overflow:hidden"></div>
   <div class="ps-sheet-wrap">
     <div class="ps-sheet-toolbar">
       <span class="ps-sheet-title">Date-wise GRN Status</span>
@@ -1491,6 +1504,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
             <div class="sa-label">● Active Session</div>
             <div class="sa-row"><span class="sa-key">Table</span><span class="sa-val" id="sa-tbl">—</span></div>
             <div class="sa-row"><span class="sa-key">PO</span><span class="sa-val" id="sa-po">—</span></div>
+            <div class="sa-row"><span class="sa-key">Invoice No.</span><span class="sa-val" id="sa-inv" style="color:var(--teal)">—</span></div>
             <div class="sa-row"><span class="sa-key">Session Start</span><span class="sa-val" id="sa-start">—</span></div>
             <div class="sa-row"><span class="sa-key">Shift</span><span class="sa-val" id="sa-shift">—</span></div>
             <div class="sa-row"><span class="sa-key">Session MRP</span><span class="sa-val c-m" id="sa-mrp">—</span></div>
@@ -1765,7 +1779,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
     <div class="tscroll" style="max-height:500px">
       <table><thead><tr>
         <th class="cb-col" id="th-cb-rec" style="display:none"><input type="checkbox" id="selectAllRec" onchange="toggleAllRec(this)"></th>
-        <th>#</th><th>Table No.</th><th>PO No.</th><th>Carton</th><th>Date</th><th>Time</th>
+        <th>#</th><th>Table No.</th><th>PO No.</th><th>Invoice No.</th><th>Carton</th><th>Date</th><th>Time</th>
         <th>Shift</th><th>EAN / Barcode</th><th>SKU Code</th><th>SKU Description</th><th>Size</th><th>Product</th>
         <th>Status</th><th>PO Status</th><th>Remarks</th><th id="th-edit-rec" style="display:none">Actions</th>
       </tr></thead>
@@ -3890,7 +3904,7 @@ function startSession(){
     const szBreakdown=readSzBdInputs();
     const sessionMRPVal=parseFloat(document.getElementById('sessionMRP').value)||0;
     session={
-      tbl,po,carton,units,
+      tbl,po,invNo,carton,units,
       mrp:sessionMRPVal,
       startDt:dt.date,startTime:dt.time,shift:dt.shift,endTime:null,
       sessionStartTime:dt.time,  // overall session start — never changes
@@ -3906,6 +3920,7 @@ function startSession(){
   document.getElementById('scanCountDisplay').style.display='block';
   document.getElementById('sa-tbl').textContent='Table '+String(tbl).padStart(2,'0');
   document.getElementById('sa-po').textContent=po;
+  const saInv=document.getElementById('sa-inv');if(saInv)saInv.textContent=invNo||'—';
   document.getElementById('sa-start').textContent=dt.date+' '+session.sessionStartTime;
   document.getElementById('sa-shift').textContent=dt.shift;
   document.getElementById('sa-mrp').textContent=session.mrp>0?'₹'+session.mrp.toFixed(2):'—';
@@ -4204,7 +4219,7 @@ function doScan(){
   const record={
     id:'r'+Date.now()+Math.random().toString(36).slice(2,6),
     ts:Date.now(),
-    tbl:session.tbl,poNo:session.po,carton:session.carton,units:session.units,
+    tbl:session.tbl,poNo:session.po,invNo:session.invNo||'',carton:session.carton,units:session.units,
     date:dt.date,time:dt.time,shift:dt.shift,
     sessionStart:session.startTime,sessionEnd:'',
     cartonStartTime:session.cartonLog&&session.cartonLog.length?session.cartonLog[session.cartonLog.length-1].startTime:'',
@@ -4406,7 +4421,7 @@ function doBulkScan(){
       const record={
         id:'r'+Date.now()+i+Math.random().toString(36).slice(2,5),
         ts:Date.now()+i,
-        tbl:session.tbl,poNo:session.po,carton:session.carton,units:session.units,
+        tbl:session.tbl,poNo:session.po,invNo:session.invNo||'',carton:session.carton,units:session.units,
         date:dt.date,time:dt.time,shift:dt.shift,
         sessionStart:session.startTime,sessionEnd:'',
         cartonStartTime,
@@ -4679,8 +4694,9 @@ function resetScanStats(){
   _scanStats.mismatch=sessionRecs.filter(r=>r.status!=='Matched').length;
   _scanStats.uniqueSKUs=new Set(sessionRecs.map(r=>r.skuCode).filter(s=>s&&s!=='—'));
   _scanStats.cartonRecs=cartonRecs.length;
+  // sizeMap and uniqueSKU counts must be CURRENT CARTON ONLY — not accumulated from previous cartons
   _scanStats.sizeMap={};
-  sessionRecs.filter(r=>r.size&&r.size!=='—').forEach(r=>{const sz=r.size.trim().toUpperCase();_scanStats.sizeMap[sz]=(_scanStats.sizeMap[sz]||0)+1;});
+  cartonRecs.filter(r=>r.size&&r.size!=='—').forEach(r=>{const sz=r.size.trim().toUpperCase();_scanStats.sizeMap[sz]=(_scanStats.sizeMap[sz]||0)+1;});
   _scanStats.cartonSet=new Set(sessionRecs.map(r=>r.carton).filter(Boolean));
   _scanStats.poUnits=poRecs.length;
   _scanStats.poCartons=new Set(poRecs.map(r=>r.tbl+'__'+r.carton).filter(Boolean));
@@ -5453,7 +5469,7 @@ function renderRecordsPage(){
   if(paginationEl)paginationEl.innerHTML=pagHtml;
 
   const body=document.getElementById('recBody');
-  if(!pageRecs.length){body.innerHTML='<tr><td colspan="'+(isAdmin?17:16)+'" class="empty-cell">No records</td></tr>';return;}
+  if(!pageRecs.length){body.innerHTML='<tr><td colspan="'+(isAdmin?18:17)+'" class="empty-cell">No records</td></tr>';return;}
 
   // Build rows WITHOUT per-row <select> — use a simple remark text + edit button
   const rows=pageRecs.map((r,i)=>{
@@ -5472,6 +5488,7 @@ function renderRecordsPage(){
       +'<td style="color:var(--ink3)">'+(total-pageStart-i)+'</td>'
       +'<td><span class="tbl-badge">T'+String(r.tbl).padStart(2,'0')+'</span></td>'
       +'<td><span class="po-badge">'+r.poNo+'</span></td>'
+      +'<td style="font-family:var(--font-mono);font-size:10px;color:var(--teal)">'+(r.invNo||'—')+'</td>'
       +'<td style="font-family:var(--font-mono);font-size:10px;font-weight:700">'+r.carton+'</td>'
       +'<td class="td-ts">'+r.date+'</td><td class="td-ts">'+r.time+'</td>'
       +'<td><span class="shift-badge '+shiftClass(r.shift)+'" style="font-size:9px;padding:2px 5px">'+r.shift+'</span></td>'
@@ -5879,8 +5896,17 @@ function exportSelectedPO(){
   if(!po){toast('Type a PO number to export','warn');return;}
   const selectedInv=((document.getElementById('exportInvSelect')||{}).value||'').trim();
   const src=(currentUser&&currentUser.type==='table')?scannedAll.filter(r=>r.tbl===currentUser.table):scannedAll;
-  const poRecs=src.filter(r=>r.poNo===po);
+  let poRecs=src.filter(r=>r.poNo===po);
   if(!poRecs.length){toast('No records found for '+po,'warn');return;}
+
+  // If a specific invoice is selected, filter records by invNo stored on the record
+  if(selectedInv){
+    const invFiltered=poRecs.filter(r=>r.invNo===selectedInv);
+    // Fallback: if records don't have invNo stored (older records), show all
+    if(invFiltered.length>0){
+      poRecs=invFiltered;
+    }
+  }
   const sizeOrder=['XS','S','M','L','XL','XXL','XXXL','OS','FREE SIZE'];
 
   // Build carton → declared size breakdown map from cartonSzBd field stored on records
@@ -6028,7 +6054,88 @@ function exportCSV(){
   const src=(currentUser&&currentUser.type==='table')?scannedAll.filter(r=>r.tbl===currentUser.table):scannedAll;
   const pos=[...new Set(src.map(r=>r.poNo))].filter(Boolean);
   if(!pos.length){toast('No records to export','warn');return;}
-  pos.forEach((po,idx)=>setTimeout(()=>{const inp=document.getElementById('exportPOInput');if(inp)inp.value=po;exportSelectedPO();},idx*500));
+  // Check if any PO has multiple invoices
+  const multiInvPOs=pos.filter(po=>{
+    const invs=[...new Set(inwardData.filter(r=>r.poNo===po&&r.invNo).map(r=>r.invNo))];
+    return invs.length>1;
+  });
+  if(multiInvPOs.length>0){
+    // Open invoice export picker modal
+    openExportInvPicker(pos);
+  }else{
+    // Single or no invoice per PO — export all directly
+    pos.forEach((po,idx)=>setTimeout(()=>{const inp=document.getElementById('exportPOInput');if(inp)inp.value=po;const sel=document.getElementById('exportInvSelect');if(sel)sel.value='';exportSelectedPO();},idx*500));
+  }
+}
+
+// ── EXPORT INVOICE PICKER MODAL ──
+function openExportInvPicker(pos){
+  const src=(currentUser&&currentUser.type==='table')?scannedAll.filter(r=>r.tbl===currentUser.table):scannedAll;
+  // Build list: for each PO, show its invoice options
+  let html='<div style="display:flex;flex-direction:column;gap:14px;max-height:60vh;overflow-y:auto;padding:2px 0">';
+  pos.forEach(po=>{
+    const poRecs=src.filter(r=>r.poNo===po);
+    const invs=[...new Set(inwardData.filter(r=>r.poNo===po&&r.invNo).map(r=>r.invNo))];
+    const scanInvs=[...new Set(poRecs.map(r=>r.invNo).filter(Boolean))];
+    const allInvs=[...new Set([...invs,...scanInvs])];
+    html+='<div style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;overflow:hidden">';
+    html+='<div style="padding:8px 14px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
+    html+='<span style="font-family:var(--font-mono);font-size:12px;font-weight:800;color:var(--green)">'+po+'</span>';
+    html+='<span style="font-size:10px;color:var(--ink3)">'+poRecs.length+' scans</span></div>';
+    html+='<div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">';
+    // Invoice select dropdown
+    html+='<div class="field-group" style="margin-bottom:0">';
+    html+='<div class="field-label">Invoice No. <span style="color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0;font-size:9px">— select to export specific invoice</span></div>';
+    html+='<div class="sel-wrap"><select class="field-select" id="expInvPick_'+po.replace(/[^a-zA-Z0-9]/g,'_')+'" style="font-family:var(--font-mono);font-size:12px">';
+    html+='<option value="">— All Invoices —</option>';
+    allInvs.forEach(inv=>{
+      const invRecs=poRecs.filter(r=>r.invNo===inv);
+      html+='<option value="'+inv+'">'+inv+' ('+invRecs.length+' scans)</option>';
+    });
+    html+='</select></div></div>';
+    html+='<button class="btn btn-lime btn-sm" style="width:100%;justify-content:center;font-weight:800" onclick="exportPickedInv(\''+po.replace(/'/g,"\\'")+'\')">';
+    html+='⬇ Export '+po+'</button></div></div>';
+  });
+  html+='</div>';
+
+  // Use a modal overlay for the picker
+  let modal=document.getElementById('exportInvPickerOverlay');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='exportInvPickerOverlay';
+    modal.className='overlay';
+    modal.style.zIndex='490';
+    modal.innerHTML='<div class="modal" style="max-width:520px;width:96vw;max-height:90vh;overflow-y:auto">'
+      +'<div class="modal-icon">📋</div>'
+      +'<div class="modal-title">Export by Invoice No.</div>'
+      +'<div class="modal-sub">Select an invoice number for each PO before exporting</div>'
+      +'<div id="exportInvPickerBody"></div>'
+      +'<div class="modal-actions" style="margin-top:14px">'
+      +'<button class="btn btn-ghost" onclick="closeExportInvPicker()">✕ Cancel</button>'
+      +'<button class="btn btn-primary" onclick="exportAllPickedInv()">⬇ Export All</button>'
+      +'</div></div>';
+    document.body.appendChild(modal);
+  }
+  document.getElementById('exportInvPickerBody').innerHTML=html;
+  modal.classList.add('show');
+  window._exportPickerPOs=pos;
+}
+function closeExportInvPicker(){
+  const m=document.getElementById('exportInvPickerOverlay');
+  if(m)m.classList.remove('show');
+}
+function exportPickedInv(po){
+  const safePo=po.replace(/[^a-zA-Z0-9]/g,'_');
+  const sel=document.getElementById('expInvPick_'+safePo);
+  const invNo=sel?sel.value:'';
+  const inp=document.getElementById('exportPOInput');if(inp)inp.value=po;
+  const expSel=document.getElementById('exportInvSelect');if(expSel)expSel.value=invNo;
+  exportSelectedPO();
+}
+function exportAllPickedInv(){
+  const pos=window._exportPickerPOs||[];
+  pos.forEach((po,idx)=>setTimeout(()=>exportPickedInv(po),idx*500));
+  setTimeout(closeExportInvPicker,200);
 }
 
 function clearPSFilters(){
@@ -6113,14 +6220,90 @@ function renderPOStatus(){
   const grnDone=filtered.filter(r=>r.grnStatus==='Done').length;
   const grnPending=filtered.filter(r=>r.grnStatus==='Pending'||!r.grnStatus).length;
   const sumInvQty=filtered.reduce((acc,r)=>{const v=parseInt(r.totalInvQty)||0;return acc+v;},0);
+
+  // Scanning Status breakdown — No. of Inv., No. of Cartons, Total Inv. Qty per status
+  const ssGoingList=filtered.filter(r=>r.scanningStatus==='Under Process');
+  const ssDoneList =filtered.filter(r=>r.scanningStatus==='Done');
+  const ssPendList =filtered.filter(r=>r.scanningStatus==='Pending');
+  const ssGoingInv=ssGoingList.length,  ssGoingBoxes=ssGoingList.reduce((s,r)=>s+(parseInt(r.noOfCartons)||0),0),  ssGoingQty=ssGoingList.reduce((s,r)=>s+(parseInt(r.totalInvQty)||0),0);
+  const ssDoneInv =ssDoneList.length,   ssDoneBoxes =ssDoneList.reduce((s,r) =>s+(parseInt(r.noOfCartons)||0),0),   ssDoneQty =ssDoneList.reduce((s,r) =>s+(parseInt(r.totalInvQty)||0),0);
+  const ssPendInv =ssPendList.length,   ssPendBoxes =ssPendList.reduce((s,r) =>s+(parseInt(r.noOfCartons)||0),0),   ssPendQty =ssPendList.reduce((s,r) =>s+(parseInt(r.totalInvQty)||0),0);
+
+  const _psNow=new Date();const _psPad=n=>String(n).padStart(2,'0');
+  const _psTodayDMY=`${_psPad(_psNow.getDate())}/${_psPad(_psNow.getMonth()+1)}/${_psNow.getFullYear()}`;
+  const _kps=v=>v===0?'—':v.toLocaleString();
+
   document.getElementById('psKpiStrip').innerHTML=`
-    <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="sc-num c-a">${total}</div><div class="sc-lbl">Total POs</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--green)"><div class="sc-num c-g">${done}</div><div class="sc-lbl">Scanning Done</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--yellow)"><div class="sc-num c-y">${underProcess}</div><div class="sc-lbl">Scanning going on</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--orange)"><div class="sc-num c-r">${pending}</div><div class="sc-lbl">Scan Pending</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--green)"><div class="sc-num c-g">${grnDone}</div><div class="sc-lbl">GRN Done</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--red)"><div class="sc-num" style="font-family:var(--font-mono);font-size:22px;font-weight:800;color:var(--red)">${grnPending}</div><div class="sc-lbl">GRN Pending</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--teal)"><div class="sc-num" style="font-family:var(--font-mono);font-size:20px;font-weight:800;color:var(--teal)">${sumInvQty.toLocaleString()}</div><div class="sc-lbl">Total Invoice Qty</div></div>`;
+  <div style="grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box">
+    <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden">
+      <!-- Header bar -->
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,#7c3aed14,#7c3aed08);border-bottom:2px solid #7c3aed30">
+        <span style="font-size:15px;flex-shrink:0">🔍</span>
+        <span style="font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#7c3aed;flex:1">Scanning Status</span>
+        <span style="font-size:9px;font-weight:700;color:#7c3aed99;font-family:var(--font-mono)">${_psTodayDMY}</span>
+      </div>
+      <!-- 3 sub-label columns -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr)">
+        <!-- Scanning Going On -->
+        <div style="display:flex;flex-direction:column;border-right:1px solid var(--border)">
+          <div style="padding:7px 14px;background:linear-gradient(135deg,#fffbeb,#fff7ed);border-bottom:1.5px solid #d9770625;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">🔄</span>
+            <span style="font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#d97706">Scanning Going On</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Inv.</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#d97706">${_kps(ssGoingInv)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Cartons</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#d97706">${_kps(ssGoingBoxes)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">Total Inv. Qty</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#d97706">${_kps(ssGoingQty)}</span>
+          </div>
+        </div>
+        <!-- Scanning Done -->
+        <div style="display:flex;flex-direction:column;border-right:1px solid var(--border)">
+          <div style="padding:7px 14px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-bottom:1.5px solid #05996925;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">✅</span>
+            <span style="font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#059669">Scanning Done</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Inv.</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#059669">${_kps(ssDoneInv)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Cartons</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#059669">${_kps(ssDoneBoxes)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">Total Inv. Qty</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:#059669">${_kps(ssDoneQty)}</span>
+          </div>
+        </div>
+        <!-- Pending -->
+        <div style="display:flex;flex-direction:column">
+          <div style="padding:7px 14px;background:linear-gradient(135deg,#f8f9ff,#eef1ff);border-bottom:1.5px solid #7080b825;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">⏳</span>
+            <span style="font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink2)">Pending</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Inv.</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:var(--ink2)">${_kps(ssPendInv)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">No. of Cartons</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:var(--ink2)">${_kps(ssPendBoxes)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px">
+            <span style="font-size:11px;color:var(--ink3);font-weight:600">Total Inv. Qty</span>
+            <span style="font-family:var(--font-mono);font-size:15px;font-weight:800;color:var(--ink2)">${_kps(ssPendQty)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
   document.getElementById('ps-count').textContent=filtered.length+' entries';
   document.getElementById('ps-tbl-count').textContent=filtered.length+' POs';
   const isAdmin=currentUser&&currentUser.type==='admin';
@@ -6139,137 +6322,110 @@ function renderPOStatus(){
   });
 
   body.innerHTML=poGroups.map((grp,gi)=>{
-    const r=grp.rows[0];
+    const r0=grp.rows[0];
     const invRows=grp.rows;
 
-    // Table breakdown sorted by table number — this drives the primary row grouping
-    const tbEntries=Object.entries(r.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+    // Table breakdown sorted by table number — shared across all invoices of this PO
+    const tbEntries=Object.entries(r0.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
     const tbList=tbEntries.length?tbEntries:[['—',{units:0,cartons:new Set()}]];
     const tbCount=tbList.length;
     const invCount=invRows.length;
     // Total physical rows = one per table × one per invoice
     const totalRows=tbCount*invCount;
 
-    // Status badge
-    const ssColor=r.scanningStatus==='Done'?'var(--green)':r.scanningStatus==='Pending'?'var(--ink3)':'var(--yellow)';
-    const ssBg=r.scanningStatus==='Done'?'var(--green-d)':r.scanningStatus==='Pending'?'rgba(74,80,112,.15)':'var(--yellow-d)';
-    const ssBorder=r.scanningStatus==='Done'?'rgba(34,197,94,.25)':r.scanningStatus==='Pending'?'var(--border)':'rgba(255,210,60,.25)';
-    const ssIcon=r.scanningStatus==='Done'?'\u2705':r.scanningStatus==='Pending'?'\u23F3':'\uD83D\uDD04';
-    const ssLabel=r.scanningStatus==='Done'?'Scanning Done':r.scanningStatus==='Pending'?'Pending':'Scanning going on';
-    const statusBadge='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:'+ssColor+';background:'+ssBg+';border:1px solid '+ssBorder+'">'+ssIcon+' '+ssLabel+'</span>';
-
-    // GRN cells — always read-only, fetched from Google Sheet (no editable dropdowns)
-    const grnColor=r.grnStatus==='Done'?'var(--green)':'var(--orange)';
-    const grnBg=r.grnStatus==='Done'?'var(--green-d)':'var(--orange-d)';
-    const grnIcon=r.grnStatus==='Done'?'\u2705':'\u23F3';
-    const grnStatusCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${grnColor};background:${grnBg};border:1px solid ${r.grnStatus==='Done'?'rgba(34,197,94,.25)':'rgba(217,119,6,.25)'}">${grnIcon} ${r.grnStatus||'Pending'}</span>`;
-    const grnRemarkCell=r.grnRemark?`<span class="rmk-badge">${r.grnRemark}</span>`:'<span class="rmk-none">\u2014</span>';
-
-    // Issue cell (Requirement 3)
-    const issueVal=r.issue||'With Issue';
-    const issueColor=issueVal==='Without Issue'?'var(--green)':'var(--red)';
-    const issueBg=issueVal==='Without Issue'?'var(--green-d)':'var(--red-d)';
-    const issueBorder=issueVal==='Without Issue'?'rgba(34,197,94,.25)':'rgba(220,38,38,.2)';
-    const issueIcon=issueVal==='Without Issue'?'\u2705':'\u26A0\uFE0F';
-    const issueCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${issueColor};background:${issueBg};border:1px solid ${issueBorder}">${issueIcon} ${issueVal}</span>`;
-
-    // TAT cell — auto-calculated from GRN Date & Issue Resolved Date
-    const tatCell=(()=>{
+    // Helper: build per-invoice right-side cells — each invoice has its OWN status/TAT/GRN
+    const buildInvRight=(inv,rsInv)=>{
+      // Status badge
+      const ssColor=inv.scanningStatus==='Done'?'var(--green)':inv.scanningStatus==='Pending'?'var(--ink3)':'var(--yellow)';
+      const ssBg=inv.scanningStatus==='Done'?'var(--green-d)':inv.scanningStatus==='Pending'?'rgba(74,80,112,.15)':'var(--yellow-d)';
+      const ssBorder=inv.scanningStatus==='Done'?'rgba(34,197,94,.25)':inv.scanningStatus==='Pending'?'var(--border)':'rgba(255,210,60,.25)';
+      const ssIcon=inv.scanningStatus==='Done'?'\u2705':inv.scanningStatus==='Pending'?'\u23F3':'\uD83D\uDD04';
+      const ssLabel=inv.scanningStatus==='Done'?'Scanning Done':inv.scanningStatus==='Pending'?'Scanning Pending':'Scanning Under Process';
+      const statusBadge='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:'+ssColor+';background:'+ssBg+';border:1px solid '+ssBorder+'">'+ssIcon+' '+ssLabel+'</span>';
+      // GRN cells
+      const grnColor=inv.grnStatus==='Done'?'var(--green)':'var(--orange)';
+      const grnBg=inv.grnStatus==='Done'?'var(--green-d)':'var(--orange-d)';
+      const grnIcon=inv.grnStatus==='Done'?'\u2705':'\u23F3';
+      const grnStatusCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${grnColor};background:${grnBg};border:1px solid ${inv.grnStatus==='Done'?'rgba(34,197,94,.25)':'rgba(217,119,6,.25)'}">${grnIcon} ${inv.grnStatus||'Pending'}</span>`;
+      const grnRemarkCell=inv.grnRemark?`<span class="rmk-badge">${inv.grnRemark}</span>`:'<span class="rmk-none">\u2014</span>';
+      // Issue cell
+      const issueVal=inv.issue||'With Issue';
+      const issueColor=issueVal==='Without Issue'?'var(--green)':'var(--red)';
+      const issueBg=issueVal==='Without Issue'?'var(--green-d)':'var(--red-d)';
+      const issueBorder=issueVal==='Without Issue'?'rgba(34,197,94,.25)':'rgba(220,38,38,.2)';
+      const issueIcon=issueVal==='Without Issue'?'\u2705':'\u26A0\uFE0F';
+      const issueCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${issueColor};background:${issueBg};border:1px solid ${issueBorder}">${issueIcon} ${issueVal}</span>`;
+      // TAT cell
       const parseD=s=>{
         if(!s||!s.trim()||s==='—'||s==='0')return null;
-        // DD/MM/YYYY or DD-MM-YYYY
         const m=s.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-        if(m){
-          const y=m[3].length===2?2000+parseInt(m[3]):parseInt(m[3]);
-          const dt=new Date(y,parseInt(m[2])-1,parseInt(m[1]));
-          return isNaN(dt.getTime())?null:dt;
-        }
-        // Google Sheets JS Date string e.g. "Thu May 21 2026 00:00:00 GMT+0530"
-        const dt=new Date(s);
-        return(!isNaN(dt.getTime())&&dt.getFullYear()>1970&&dt.getFullYear()<2100)?dt:null;
+        if(m){const y=m[3].length===2?2000+parseInt(m[3]):parseInt(m[3]);const dt=new Date(y,parseInt(m[2])-1,parseInt(m[1]));return isNaN(dt.getTime())?null:dt;}
+        const dt=new Date(s);return(!isNaN(dt.getTime())&&dt.getFullYear()>1970&&dt.getFullYear()<2100)?dt:null;
       };
-      const gd=parseD(r.grnDate);
-      const rd=parseD(r.issueResolvedDate);
+      const gd=parseD(inv.grnDate),rd=parseD(inv.issueResolvedDate);
       let lbl,col,bg,bdr,ico;
-      if(!gd){
-        lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';
-      }else if(rd){
-        const diffDays=Math.abs(Math.round((rd-gd)/(1000*60*60*24)));
-        if(diffDays<=1){lbl='Within TAT';col='var(--green)';bg='var(--green-d)';bdr='rgba(34,197,94,.25)';ico='\u2705';}
-        else{lbl='Above TAT';col='var(--red)';bg='var(--red-d)';bdr='rgba(220,38,38,.2)';ico='\u26A0\uFE0F';}
-      }else{
-        lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';
-      }
-      return`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${col};background:${bg};border:1px solid ${bdr}">${ico} ${lbl}</span>`;
-    })();
+      if(!gd){lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';}
+      else if(rd){const diffDays=Math.abs(Math.round((rd-gd)/(1000*60*60*24)));if(diffDays<=1){lbl='Within TAT';col='var(--green)';bg='var(--green-d)';bdr='rgba(34,197,94,.25)';ico='\u2705';}else{lbl='Above TAT';col='var(--red)';bg='var(--red-d)';bdr='rgba(220,38,38,.2)';ico='\u26A0\uFE0F';}}
+      else{lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';}
+      const tatCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${col};background:${bg};border:1px solid ${bdr}">${ico} ${lbl}</span>`;
+      // Each invoice has its own right-side cells (no rowspan across invoices)
+      return `<td${rsInv}>${statusBadge}</td>`
+        +`<td${rsInv} class="td-ts">${inv.scanningDate||'\u2014'}</td>`
+        +`<td${rsInv}>${issueCell}</td>`
+        +`<td${rsInv} class="td-ts" style="color:var(--teal)">${inv.issueResolvedDate||'\u2014'}</td>`
+        +`<td${rsInv} class="td-ts" style="color:var(--green)">${inv.grnDate||'\u2014'}</td>`
+        +`<td${rsInv} class="td-num" style="color:var(--green);font-weight:700">${inv.grnQty||'\u2014'}</td>`
+        +`<td${rsInv}>${grnStatusCell}</td>`
+        +`<td${rsInv}>${tatCell}</td>`
+        +`<td${rsInv}>${grnRemarkCell}</td>`;
+    };
 
-    // Shared frozen-left cols span ALL rows of this PO
-    const rsAll=` rowspan="${totalRows}"`;
-    const sharedLeft=`<td${rsAll} class="ps-fr ps-fr-num ps-row-num">${gi+1}</td>`
-      +`<td${rsAll} class="ps-fr ps-fr-date td-ts">${r.date||'\u2014'}</td>`
-      +`<td${rsAll} class="ps-fr ps-fr-vendor" style="font-size:11px;overflow:hidden;text-overflow:ellipsis">${r.vendorName||'\u2014'}</td>`
-      +`<td${rsAll} class="ps-fr ps-fr-po"><span class="po-badge">${r.poNo}</span></td>`
-      +`<td${rsAll} style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">${r.newPO||'\u2014'}</td>`;
-    // Shared right cols also span all rows
-    const sharedRight=`<td${rsAll}>${statusBadge}</td>`
-      +`<td${rsAll} class="td-ts">${r.scanningDate||'\u2014'}</td>`
-      +`<td${rsAll}>${issueCell}</td>`
-      +`<td${rsAll} class="td-ts" style="color:var(--teal)">${r.issueResolvedDate||'\u2014'}</td>`
-      +`<td${rsAll} class="td-ts" style="color:var(--green)">${r.grnDate||'\u2014'}</td>`
-      +`<td${rsAll} class="td-num" style="color:var(--green);font-weight:700">${r.grnQty||'\u2014'}</td>`
-      +`<td${rsAll}>${grnStatusCell}</td>`
-      +`<td${rsAll}>${tatCell}</td>`
-      +`<td${rsAll}>${grnRemarkCell}</td>`;
+    // Each invoice row repeats the PO details (requirement: separate row per unique Invoice No.)
+    const makeSharedLeft=(rowNum)=>
+      `<td class="ps-fr ps-fr-num ps-row-num">${rowNum}</td>`
+      +`<td class="ps-fr ps-fr-date td-ts">${r0.date||'\u2014'}</td>`
+      +`<td class="ps-fr ps-fr-vendor" style="font-size:11px;overflow:hidden;text-overflow:ellipsis">${r0.vendorName||'\u2014'}</td>`
+      +`<td class="ps-fr ps-fr-po"><span class="po-badge">${r0.poNo}</span></td>`
+      +`<td style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">${r0.newPO||'\u2014'}</td>`;
 
     const html=[];
-    tbList.forEach(([t,v],ti)=>{
-      const isTbLast=ti===tbList.length-1;
-      // Table badge + unit/carton counts span invCount rows within this table group
-      const rsT=invCount>1?` rowspan="${invCount}"`:'';
-      const tBadge=t==='\u2014'
-        ?'<span class="rmk-none">\u2014</span>'
-        :`<span class="tbl-badge" style="font-size:10px;padding:3px 8px">T${String(t).padStart(2,'0')}</span>`;
-      const tUnits=t==='\u2014'?'\u2014':v.units;
-      const tCartons=t==='\u2014'?'\u2014':v.cartons.size;
-      // Subtle alternating bg for each table group
-      const tbBg=tbCount>1&&ti%2!==0?'background:#f6f8ff':'';
-
-      invRows.forEach((inv,ii)=>{
-        const isFirstInTable=ii===0;
-        const isTbLastRow=ii===invCount-1;
-        const isVeryFirst=ti===0&&ii===0;
-        const isVeryLast=isTbLast&&isTbLastRow;
-
-        const invCols=`<td style="font-family:var(--font-mono);font-size:10px;color:var(--teal)">${inv.invNo||'\u2014'}</td>`
-          +`<td class="td-ts">${inv.invDate||'\u2014'}</td>`
-          +`<td class="td-num" style="color:var(--accent);font-weight:700">${inv.totalInvQty!==undefined&&inv.totalInvQty!=='\u2014'?inv.totalInvQty:'\u2014'}</td>`
-          +`<td class="td-num">${inv.noOfCartons!==undefined&&inv.noOfCartons!=='\u2014'?inv.noOfCartons:'\u2014'}</td>`;
-
-        // Table badge cells — inject only on first invoice row of each table group
-        const tCells=isFirstInTable
-          ?`<td${rsT} style="text-align:center;vertical-align:middle;border-right:1px solid #d0d7f0">${tBadge}</td>`
-           +`<td${rsT} class="td-num" style="color:var(--green);font-weight:700;vertical-align:middle">${tUnits}</td>`
-           +`<td${rsT} class="td-num" style="color:var(--teal);font-weight:700;vertical-align:middle">${tCartons}</td>`
-          :'';
-
-        const sepStyle=isVeryLast
-          ?'border-bottom:2px solid #8fa8d8'
-          :isTbLastRow&&!isTbLast
-            ?'border-bottom:2px dashed #b8c4e4'
-            :'border-bottom:1px solid #d0d7f0';
-
-        if(isVeryFirst){
-          html.push(`<tr style="${sepStyle};${tbBg}">${sharedLeft}${invCols}${tCells}${sharedRight}</tr>`);
-        }else{
-          html.push(`<tr style="${sepStyle};${tbBg}">${invCols}${tCells}</tr>`);
-        }
+    // Flatten: one row per invoice (repeat PO details on each row)
+    invRows.forEach((inv,ii)=>{
+      const isLast=ii===invRows.length-1;
+      const sepStyle=isLast?'border-bottom:2px solid #8fa8d8':'border-bottom:1px solid #d0d7f0';
+      const invRight=buildInvRight(inv,'');
+      const invCols=`<td style="font-family:var(--font-mono);font-size:10px;color:var(--teal)">${inv.invNo||'\u2014'}</td>`
+        +`<td class="td-ts">${inv.invDate||'\u2014'}</td>`
+        +`<td class="td-num" style="color:var(--accent);font-weight:700">${inv.totalInvQty!==undefined&&inv.totalInvQty!=='\u2014'?inv.totalInvQty:'\u2014'}</td>`
+        +`<td class="td-num">${inv.noOfCartons!==undefined&&inv.noOfCartons!=='\u2014'?inv.noOfCartons:'\u2014'}</td>`;
+      // Table breakdown — show first table on this row; additional tables as sub-rows within invoice
+      const tbEntries2=Object.entries(r0.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+      const tbList2=tbEntries2.length?tbEntries2:[['\u2014',{units:0,cartons:new Set()}]];
+      const t0=tbList2[0];
+      const tBadge0=t0[0]==='\u2014'?'<span class="rmk-none">\u2014</span>'
+        :`<span class="tbl-badge" style="font-size:10px;padding:3px 8px">T${String(t0[0]).padStart(2,'0')}</span>`;
+      const tCells0=`<td style="text-align:center;vertical-align:middle;border-right:1px solid #d0d7f0">${tBadge0}</td>`
+        +`<td class="td-num" style="color:var(--green);font-weight:700">${t0[0]==='\u2014'?'\u2014':t0[1].units}</td>`
+        +`<td class="td-num" style="color:var(--teal);font-weight:700">${t0[0]==='\u2014'?'\u2014':t0[1].cartons.size}</td>`;
+      const rowBg=ii%2===0?'':'background:#fafbff';
+      html.push(`<tr style="${sepStyle};${rowBg}"${isLast?' class="ps-group-end"':''}>${makeSharedLeft(gi*100+ii+1)}${invCols}${tCells0}${invRight}</tr>`);
+      // Additional tables as extra rows (no PO repeat, just table info)
+      tbList2.slice(1).forEach(([t,v],ti)=>{
+        const tBadge=`<span class="tbl-badge" style="font-size:10px;padding:3px 8px">T${String(t).padStart(2,'0')}</span>`;
+        html.push(`<tr style="border-bottom:1px dashed #d0d7f0;${rowBg}">`
+          +`<td class="ps-fr ps-fr-num ps-row-num"></td>`
+          +`<td class="ps-fr ps-fr-date td-ts" style="color:var(--ink3);font-size:10px">↳ same PO</td>`
+          +`<td class="ps-fr ps-fr-vendor"></td>`
+          +`<td class="ps-fr ps-fr-po"></td>`
+          +`<td></td><td></td><td></td><td></td><td></td>`
+          +`<td style="text-align:center">${tBadge}</td>`
+          +`<td class="td-num" style="color:var(--green);font-weight:700">${v.units}</td>`
+          +`<td class="td-num" style="color:var(--teal);font-weight:700">${v.cartons.size}</td>`
+          +`<td colspan="9"></td>`
+          +'</tr>');
       });
     });
-
-    if(html.length>0){
-      html[html.length-1]=html[html.length-1].replace('<tr ','<tr class="ps-group-end" ').replace('<tr>','<tr class="ps-group-end">');
-    }
-  return html.join('');
+    return html.join('');
   }).join('');
 }
 function updateGRNStatus(invId,val){
@@ -6359,6 +6515,23 @@ function exportPOStatus(){
 }
 
 // ── GRN DASHBOARD ─────────────────────────────────────────────────────────────
+function _gdPopulateDateDropdowns(){
+  const fromSel=document.getElementById("gdDateFrom");
+  const toSel=document.getElementById("gdDateTo");
+  if(!fromSel||!toSel)return;
+  const curFrom=fromSel.value;
+  const curTo=toSel.value;
+  const dates=[...new Set(inwardData.map(i=>i.date||"").filter(Boolean))].sort((a,b)=>{
+    const da=_gdParseDate(a),db=_gdParseDate(b);
+    if(da&&db)return da-db;return a.localeCompare(b);
+  });
+  const blankOpt='<option value=>All dates</option>';
+  const opts=dates.map(d=>`<option value="${d}">${d}</option>`).join("");
+  fromSel.innerHTML=blankOpt+opts;
+  toSel.innerHTML=blankOpt+opts;
+  if(curFrom)fromSel.value=curFrom;
+  if(curTo)toSel.value=curTo;
+}
 function _gdParseDate(s){
   if(!s||!s.trim()||s==='—')return null;
   const m=s.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
@@ -6381,6 +6554,7 @@ function _gdDateMatchFilter(dateStr,from,to){
 }
 
 function renderGRNDash(){
+  _gdPopulateDateDropdowns();
   if(!inwardData.length){
     document.getElementById('gdBody').innerHTML='<tr><td colspan="22" class="empty-cell">Upload inward register to see GRN dashboard</td></tr>';
     document.getElementById('gdKpiStrip').innerHTML='';
@@ -6414,7 +6588,7 @@ function renderGRNDash(){
   }
 
   // Grand totals for KPI strip
-  let kpi={unloadInv:0,unloadBoxes:0,unloadQty:0,doneInv:0,doneBoxes:0,doneQty:0,underInv:0,underBoxes:0,underQty:0,issueInv:0,issueBoxes:0,issueQty:0,pendInv:0,pendBoxes:0,pendQty:0,aboveTAT:0,withinTAT:0};
+  let kpi={unloadInv:0,unloadBoxes:0,unloadQty:0,doneInv:0,doneBoxes:0,doneQty:0,underInv:0,underBoxes:0,underQty:0,issueInv:0,issueBoxes:0,issueQty:0,pendInv:0,pendBoxes:0,pendQty:0,beyondCap:0,aboveTAT:0,withinTAT:0};
 
   const rows=sortedDates.map((date,idx)=>{
     const invList=byDate[date];
@@ -6453,11 +6627,32 @@ function renderGRNDash(){
     const pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
     const pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
 
-    // TAT — only for done invoices that have both dates
-    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate));
-    const beyond=tatList.filter(i=>!_gdParseDate(i.issueResolvedDate)).length;
-    const above=tatList.filter(i=>_gdTAT(i)==='above').length;
-    const within=tatList.filter(i=>_gdTAT(i)==='within').length;
+    // Daily capacity cap = 30,000 units
+    // Walk all invoices in order; qty within cap goes to TAT pool, qty over cap → beyondCapacity
+    const DAILY_CAP=30000;
+    let capRemaining=DAILY_CAP;
+    let beyondCapQty=0;
+    // Build a map: invId → qty that falls within capacity (for TAT calc)
+    const withinCapQty={};
+    invList.forEach(inv=>{
+      const qty=parseInt(inv.totalInvQty)||0;
+      if(capRemaining<=0){
+        beyondCapQty+=qty;
+      }else if(qty<=capRemaining){
+        withinCapQty[inv.id]=qty;
+        capRemaining-=qty;
+      }else{
+        withinCapQty[inv.id]=capRemaining;
+        beyondCapQty+=qty-capRemaining;
+        capRemaining=0;
+      }
+    });
+    const beyond=beyondCapQty;
+
+    // TAT — only for done invoices that have GRN Date, using within-capacity qty only
+    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(withinCapQty[i.id]||0)>0);
+    const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(withinCapQty[i.id]||0),0);
+    const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(withinCapQty[i.id]||0),0);
     const tatTotal=above+within;
     const abovePct=tatTotal>0?((above/tatTotal)*100).toFixed(2)+'%':'0.00%';
     const withinPct=tatTotal>0?((within/tatTotal)*100).toFixed(2)+'%':'0.00%';
@@ -6468,7 +6663,8 @@ function renderGRNDash(){
     kpi.underInv+=upInv;kpi.underBoxes+=upBoxes;kpi.underQty+=upQty;
     kpi.issueInv+=iInv;kpi.issueBoxes+=iBoxes;kpi.issueQty+=iQty;
     kpi.pendInv+=pInv;kpi.pendBoxes+=pBoxes;kpi.pendQty+=pQty;
-    kpi.aboveTAT+=above;kpi.withinTAT+=within;
+    kpi.beyondCap+=beyond;kpi.aboveTAT+=above;kpi.withinTAT+=within;
+
 
     const n=v=>v===0?'<span style="color:var(--ink3)">-</span>':v.toLocaleString();
     const pctBadge=(pct,col)=>`<span style="font-size:10px;font-weight:700;color:${col}">${pct}</span>`;
@@ -6491,7 +6687,7 @@ function renderGRNDash(){
       <td class="ps-num-cell" style="color:var(--orange)">${n(pInv)}</td>
       <td class="ps-num-cell" style="color:var(--orange)">${n(pBoxes)}</td>
       <td class="ps-num-cell" style="color:var(--orange)">${n(pQty)}</td>
-      <td class="ps-num-cell" style="color:var(--purple)">${n(beyond)}</td>
+      <td class="ps-num-cell" style="color:var(--purple)">${beyond>0?`<span style="font-weight:800;color:var(--purple)">${beyond.toLocaleString()}</span>`:'<span style="color:var(--ink3)">-</span>'}</td>
       <td class="ps-num-cell" style="color:var(--red);font-weight:700">${n(above)}</td>
       <td class="ps-num-cell" style="color:var(--green);font-weight:700">${n(within)}</td>
       <td class="ps-num-cell">${pctBadge(abovePct,'var(--red)')}</td>
@@ -6522,7 +6718,7 @@ function renderGRNDash(){
     <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendInv)}</td>
     <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendBoxes)}</td>
     <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendQty)}</td>
-    <td class="ps-num-cell" style="color:var(--purple);font-weight:800">-</td>
+    <td class="ps-num-cell" style="color:var(--purple);font-weight:800">${kpi.beyondCap>0?tn(kpi.beyondCap):'-'}</td>
     <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tn(kpi.aboveTAT)}</td>
     <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tn(kpi.withinTAT)}</td>
     <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tAbovePct}</td>
@@ -6532,15 +6728,114 @@ function renderGRNDash(){
   document.getElementById('gdBody').innerHTML=rows.join('');
   document.getElementById('gd-tbl-count').textContent=sortedDates.length+' date'+(sortedDates.length!==1?'s':'');
 
-  // KPI strip
-  const grnPct=kpi.unloadInv>0?Math.round(kpi.doneInv/kpi.unloadInv*100):0;
+  // ── KPI Dashboard ──
+  // Today's date in DD/MM/YYYY format for display
+  const _now=new Date();
+  const _pad=n=>String(n).padStart(2,'0');
+  const todayDMY=`${_pad(_now.getDate())}/${_pad(_now.getMonth()+1)}/${_now.getFullYear()}`;
+  // Today's date as comparable string
+  const todayKey=todayDMY;
+
+  // ── Today's Inward Details (from Vehicle Unloading — inwardData filtered to today's arrived date)
+  const todayInward=inwardData.filter(i=>i.date===todayKey);
+  const tidPOs=[...new Set(todayInward.map(i=>i.poNo).filter(Boolean))].length;
+  const tidBoxes=todayInward.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
+  const tidQty=todayInward.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+
+  // ── Today's GRN Qty (from inwardData where grnDate === today)
+  const todayGRN=inwardData.filter(i=>i.grnDate&&i.grnDate===todayKey);
+  const tgPOs=[...new Set(todayGRN.map(i=>i.poNo).filter(Boolean))].length;
+  const tgBoxes=todayGRN.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
+  const tgQty=todayGRN.reduce((s,i)=>s+(parseInt(i.grnQty)||parseInt(i.totalInvQty)||0),0);
+
+  // ── Under Process GRN — from kpi totals
+  // ── GRN Pending with Issue — from kpi totals
+  // ── TAT totals
+  const tatTt=kpi.aboveTAT+kpi.withinTAT;
+  const tAbovePctKpi=tatTt>0?((kpi.aboveTAT/tatTt)*100).toFixed(1)+'%':'0.0%';
+  const tWithinPctKpi=tatTt>0?((kpi.withinTAT/tatTt)*100).toFixed(1)+'%':'0.0%';
+
+  const _kn=v=>v===0?'—':v.toLocaleString();
+
+  // ── Section block: header + 3 stacked label-value rows ──
+  // Each section is a single card with a coloured header bar, then rows for each metric.
+  const secBlock=(title,color,icon,rows)=>{
+    const rowsHtml=rows.map((r,i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;${i<rows.length-1?'border-bottom:1px solid var(--border)':''}">
+        <div style="display:flex;align-items:center;gap:7px;min-width:0">
+          <span style="font-size:13px;flex-shrink:0">${r.icon}</span>
+          <span style="font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.label}</span>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:${color};flex-shrink:0;margin-left:10px">${r.val}</span>
+      </div>`).join('');
+    return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;min-width:0;height:100%">
+      <!-- Section header bar -->
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,${color}14,${color}08);border-bottom:2px solid ${color}30">
+        <span style="font-size:15px;flex-shrink:0">${icon}</span>
+        <span style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">${title}</span>
+        <span style="font-size:9px;font-weight:700;color:${color}99;font-family:var(--font-mono);flex-shrink:0">${todayDMY}</span>
+      </div>
+      <!-- Metric rows -->
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
+        ${rowsHtml}
+      </div>
+    </div>`;
+  };
+
+  // ── TAT section: header + 2 stacked rows (Within TAT / Above TAT) with % sub-label ──
+  const tatBlock=`<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;min-width:0;height:100%">
+    <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,#a855f714,#a855f708);border-bottom:2px solid #a855f730">
+      <span style="font-size:15px;flex-shrink:0">⏱️</span>
+      <span style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#a855f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">TAT Analysis</span>
+      <span style="font-size:9px;font-weight:700;color:#a855f799;font-family:var(--font-mono);flex-shrink:0">${todayDMY}</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="font-size:13px">✅</span>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--ink2)">Within TAT</div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-top:1px">${tWithinPctKpi}</div>
+          </div>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--green);flex-shrink:0;margin-left:10px">${_kn(kpi.withinTAT)}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="font-size:13px">⚠️</span>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--ink2)">Above TAT</div>
+            <div style="font-size:10px;font-weight:700;color:var(--red);margin-top:1px">${tAbovePctKpi}</div>
+          </div>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--red);flex-shrink:0;margin-left:10px">${_kn(kpi.aboveTAT)}</span>
+      </div>
+    </div>
+  </div>`;
+
+
   document.getElementById('gdKpiStrip').innerHTML=`
-    <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="sc-num c-a">${kpi.unloadInv}</div><div class="sc-lbl">Total Invoices</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--green)"><div class="sc-num c-g">${kpi.doneInv}</div><div class="sc-lbl">GRN Accomplished</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--yellow)"><div class="sc-num c-y">${kpi.underInv}</div><div class="sc-lbl">Under Process</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--red)"><div class="sc-num" style="font-family:var(--font-mono);font-size:22px;font-weight:800;color:var(--red)">${kpi.issueInv}</div><div class="sc-lbl">Pending w/ Issue</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--green)"><div class="sc-num c-g">${kpi.withinTAT}</div><div class="sc-lbl">Within TAT</div></div>
-    <div class="stat-card" style="border-left:3px solid var(--red)"><div class="sc-num" style="font-family:var(--font-mono);font-size:22px;font-weight:800;color:var(--purple)">${grnPct}%</div><div class="sc-lbl">GRN Completion</div></div>`;
+  <div style="width:100%;min-width:0;box-sizing:border-box">
+    <div class="gd-kpi-5col" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch">
+      ${secBlock("Today's Inward Details","#2563eb","🚛",[
+        {icon:'📦',label:'No. of Inv.',        val:_kn(tidPOs)},
+        {icon:'🗃️',label:'Total Boxes',        val:_kn(tidBoxes)},
+        {icon:'📊',label:'Total Inv. Qty',     val:_kn(tidQty)}])}
+      ${secBlock("Today's GRN Qty","#059669","✅",[
+        {icon:'📋',label:'No. of Inv.',        val:_kn(tgPOs)},
+        {icon:'🗃️',label:'Total Boxes',        val:_kn(tgBoxes)},
+        {icon:'📦',label:'Total GRN Qty',      val:_kn(tgQty)}])}
+      ${secBlock("Under Process GRN","#d97706","🔄",[
+        {icon:'🔄',label:'No. of Inv.',        val:_kn(kpi.underInv)},
+        {icon:'🗃️',label:'Total Boxes',        val:_kn(kpi.underBoxes)},
+        {icon:'📊',label:'Total Inv. Qty',     val:_kn(kpi.underQty)}])}
+      ${secBlock("GRN Pending w/ Issue","#dc2626","⚠️",[
+        {icon:'⚠️',label:'No. of Inv.',        val:_kn(kpi.issueInv)},
+        {icon:'🗃️',label:'Total Boxes',        val:_kn(kpi.issueBoxes)},
+        {icon:'📊',label:'Total Inv. Qty',     val:_kn(kpi.issueQty)}])}
+      ${tatBlock}
+    </div>
+  </div>`;
 }
 
 function exportGRNDash(){
@@ -6567,10 +6862,20 @@ function exportGRNDash(){
     const iInv=issueList.length,iBoxes=issueList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
     const pendList=invList.filter(i=>i.grnStatus!=='Done');
     const pInv=pendList.length,pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
-    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate));
-    const beyond=tatList.filter(i=>!_gdParseDate(i.issueResolvedDate)).length;
-    const above=tatList.filter(i=>_gdTAT(i)==='above').length;
-    const within=tatList.filter(i=>_gdTAT(i)==='within').length;
+    // Daily capacity cap = 30,000 units
+    const DAILY_CAP_EX=30000;
+    let capRem=DAILY_CAP_EX,beyondQty=0;
+    const wcQty={};
+    invList.forEach(inv=>{
+      const qty=parseInt(inv.totalInvQty)||0;
+      if(capRem<=0){beyondQty+=qty;}
+      else if(qty<=capRem){wcQty[inv.id]=qty;capRem-=qty;}
+      else{wcQty[inv.id]=capRem;beyondQty+=qty-capRem;capRem=0;}
+    });
+    const beyond=beyondQty;
+    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wcQty[i.id]||0)>0);
+    const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+    const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
     const t=above+within;
     return[date,uInv,uBoxes,uQty,dInv,dBoxes,dQty,upInv,upBoxes,upQty,iInv,iBoxes,iQty,pInv,pBoxes,pQty,beyond,above,within,t>0?((above/t)*100).toFixed(2)+'%':'0.00%',t>0?((within/t)*100).toFixed(2)+'%':'0.00%'];
   });
@@ -6580,6 +6885,636 @@ function exportGRNDash(){
   toast('GRN Dashboard exported — '+sortedDates.length+' dates','ok');
 }
 // ── /GRN DASHBOARD ────────────────────────────────────────────────────────────
+
+function exportGRNDashImage(){
+  if(!inwardData.length){toast('No data to export','warn');return;}
+  const fromVal=(document.getElementById('gdDateFrom').value||'').trim();
+  const toVal  =(document.getElementById('gdDateTo').value||'').trim();
+
+  // Build per-date summary rows
+  const byDate={};
+  inwardData.forEach(inv=>{
+    const d=inv.date||'—';
+    if(!_gdDateMatchFilter(d,fromVal,toVal))return;
+    if(!byDate[d])byDate[d]=[];
+    byDate[d].push(inv);
+  });
+  const sortedDates=Object.keys(byDate).sort((a,b)=>{const da=_gdParseDate(a),db=_gdParseDate(b);if(da&&db)return da-db;return a.localeCompare(b);});
+  if(!sortedDates.length){toast('No data in selected range','warn');return;}
+
+  // Summary data per date
+  const summary=sortedDates.map(date=>{
+    const invList=byDate[date];
+    const uInv=invList.length,uBoxes=invList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),uQty=invList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    const doneList=invList.filter(i=>i.grnStatus==='Done');
+    const dInv=doneList.length,dQty=doneList.reduce((s,i)=>s+(parseInt(i.grnQty)||parseInt(i.totalInvQty)||0),0);
+    const underList=invList.filter(i=>i.grnStatus!=='Done'&&!(i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done')));
+    const upInv=underList.length,upQty=underList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    const issueList=invList.filter(i=>i.grnStatus!=='Done'&&i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done'));
+    const iInv=issueList.length,iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    const DAILY_CAP=30000;let capRem=DAILY_CAP,bcQty=0;const wc={};
+    invList.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
+    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wc[i.id]||0)>0);
+    const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wc[i.id]||0),0);
+    const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wc[i.id]||0),0);
+    return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty};
+  });
+
+  // Grand totals
+  const T={uInv:0,uBoxes:0,uQty:0,dInv:0,dQty:0,upInv:0,upQty:0,iInv:0,iQty:0,above:0,within:0,bc:0};
+  summary.forEach(r=>{T.uInv+=r.uInv;T.uBoxes+=r.uBoxes;T.uQty+=r.uQty;T.dInv+=r.dInv;T.dQty+=r.dQty;T.upInv+=r.upInv;T.upQty+=r.upQty;T.iInv+=r.iInv;T.iQty+=r.iQty;T.above+=r.above;T.within+=r.within;T.bc+=r.bc;});
+  const tt=T.above+T.within;
+  const abovePct=tt>0?((T.above/tt)*100).toFixed(1):'0.0';
+  const withinPct=tt>0?((T.within/tt)*100).toFixed(1):'0.0';
+  const grnPct=T.uInv>0?((T.dInv/T.uInv)*100).toFixed(1):'0.0';
+
+  const _now=new Date();const _p=n=>String(n).padStart(2,'0');
+  const generatedOn=`${_p(_now.getDate())}/${_p(_now.getMonth()+1)}/${_now.getFullYear()} ${_p(_now.getHours())}:${_p(_now.getMinutes())}`;
+  const dateRange=fromVal&&toVal?`${fromVal} – ${toVal}`:fromVal?`From ${fromVal}`:toVal?`Till ${toVal}`:'All Dates';
+  const n=v=>v===0?'—':v.toLocaleString();
+
+  const tableRows=summary.map((r,i)=>{
+    const t2=r.above+r.within;
+    const wPct=t2>0?((r.within/t2)*100).toFixed(1)+'%':'—';
+    const aPct=t2>0?((r.above/t2)*100).toFixed(1)+'%':'—';
+    const dPct=r.uInv>0?((r.dInv/r.uInv)*100).toFixed(0)+'%':'—';
+    return `<tr class="${i%2===0?'':'alt'}">
+      <td class="tc">${i+1}</td><td class="tl">${r.date}</td>
+      <td class="tr">${r.uInv}</td><td class="tr">${n(r.uBoxes)}</td><td class="tr num">${n(r.uQty)}</td>
+      <td class="tr num grn">${n(r.dQty)}</td>
+      <td class="tr ${r.upInv>0?'ylw':''}">${n(r.upQty)}</td>
+      <td class="tr ${r.iInv>0?'red':''}">${n(r.iQty)}</td>
+      <td class="tr ${r.bc>0?'pur':''}">${n(r.bc)}</td>
+      <td class="tr grn">${n(r.within)}</td><td class="tc grn">${wPct}</td>
+      <td class="tr red">${n(r.above)}</td><td class="tc red">${aPct}</td>
+    </tr>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>GRN Status Report — 3D Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --blue:#3b82f6;--blue-d:#1d4ed8;--green:#22c55e;--green-d:#15803d;
+    --yellow:#f59e0b;--yellow-d:#b45309;--red:#ef4444;--red-d:#b91c1c;
+    --purple:#a855f7;--purple-d:#7c3aed;--teal:#14b8a6;--teal-d:#0f766e;
+    --ink:#0f172a;--ink2:#1e293b;--ink3:#64748b;
+  }
+  body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#0f172a 100%);color:var(--ink);padding:28px;min-height:100vh}
+  .page{max-width:1280px;margin:0 auto}
+
+  /* ── PRINT BUTTON ── */
+  .print-btn{position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;border:none;padding:11px 22px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(59,130,246,.5);z-index:999;display:flex;align-items:center;gap:7px;letter-spacing:.3px}
+  .print-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(59,130,246,.6)}
+  @media print{.print-btn{display:none}body{background:#f1f5f9;padding:12px}.chart-box{break-inside:avoid}.tbl-wrap{break-inside:avoid}}
+
+  /* ── HEADER ── */
+  .report-header{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.03));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12)}
+  .logo-wrap{display:flex;align-items:center;gap:16px}
+  .logo-3d{width:52px;height:52px;background:linear-gradient(135deg,#3b82f6,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 0 #1d4ed8,0 8px 20px rgba(59,130,246,.5);transform:perspective(100px) rotateX(8deg);position:relative}
+  .logo-3d::after{content:'';position:absolute;bottom:-4px;left:4px;right:-4px;height:100%;background:linear-gradient(135deg,#1d4ed8,#5b21b6);border-radius:14px;z-index:-1}
+  .hdr-title{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
+  .hdr-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:4px;font-weight:500;letter-spacing:.5px}
+  .hdr-meta{text-align:right}
+  .hdr-date{font-size:11px;color:rgba(255,255,255,.5);font-weight:500}
+  .hdr-range{font-size:13px;font-weight:700;color:#60a5fa;margin-top:4px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:3px 12px;display:inline-block}
+  .hdr-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:700;color:#4ade80;letter-spacing:.5px}
+  .hdr-badge-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+  /* ── KPI GRID ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+  .kpi{border-radius:16px;padding:16px;color:#fff;position:relative;overflow:hidden;cursor:default;transition:transform .2s}
+  .kpi:hover{transform:translateY(-3px)}
+  /* 3D card effect */
+  .kpi-inner{position:relative;z-index:1}
+  .kpi::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(160deg,rgba(255,255,255,.18) 0%,transparent 60%);pointer-events:none}
+  .kpi-lbl{font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;opacity:.75;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+  .kpi-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .kpi-sub{font-size:10px;opacity:.65;margin-top:5px;line-height:1.4}
+  .kpi-icon{position:absolute;right:12px;top:12px;font-size:28px;opacity:.2}
+  .kpi-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 16px 16px}
+  /* 3D shadow bottom */
+  .kpi-shadow{position:absolute;bottom:-6px;left:6px;right:-6px;height:100%;border-radius:16px;z-index:-1;filter:blur(2px);opacity:.5}
+
+  .kpi-blue{background:linear-gradient(135deg,#2563eb,#1e40af);box-shadow:0 4px 0 #1e3a8a,0 8px 24px rgba(37,99,235,.5)}
+  .kpi-blue .kpi-shadow{background:linear-gradient(135deg,#1e3a8a,#1e40af)}
+  .kpi-blue .kpi-bar{background:linear-gradient(90deg,#60a5fa,#93c5fd)}
+  .kpi-green{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 4px 0 #14532d,0 8px 24px rgba(22,163,74,.5)}
+  .kpi-green .kpi-shadow{background:#14532d}
+  .kpi-green .kpi-bar{background:linear-gradient(90deg,#4ade80,#86efac)}
+  .kpi-yellow{background:linear-gradient(135deg,#d97706,#b45309);box-shadow:0 4px 0 #92400e,0 8px 24px rgba(217,119,6,.5)}
+  .kpi-yellow .kpi-shadow{background:#92400e}
+  .kpi-yellow .kpi-bar{background:linear-gradient(90deg,#fbbf24,#fde68a)}
+  .kpi-red{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 4px 0 #7f1d1d,0 8px 24px rgba(220,38,38,.5)}
+  .kpi-red .kpi-shadow{background:#7f1d1d}
+  .kpi-red .kpi-bar{background:linear-gradient(90deg,#f87171,#fca5a5)}
+  .kpi-teal{background:linear-gradient(135deg,#0d9488,#0f766e);box-shadow:0 4px 0 #134e4a,0 8px 24px rgba(13,148,136,.5)}
+  .kpi-teal .kpi-shadow{background:#134e4a}
+  .kpi-teal .kpi-bar{background:linear-gradient(90deg,#2dd4bf,#99f6e4)}
+  .kpi-purple{background:linear-gradient(135deg,#7c3aed,#6d28d9);box-shadow:0 4px 0 #4c1d95,0 8px 24px rgba(124,58,237,.5)}
+  .kpi-purple .kpi-shadow{background:#4c1d95}
+  .kpi-purple .kpi-bar{background:linear-gradient(90deg,#c084fc,#e9d5ff)}
+
+  /* ── SECTION LABEL ── */
+  .section-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:10px;padding-left:4px;display:flex;align-items:center;gap:8px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+
+  /* ── CHARTS ROW ── */
+  .charts-row{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:14px;margin-bottom:20px}
+  .chart-box{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px;box-shadow:0 4px 0 rgba(0,0,0,.3),0 12px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);position:relative;overflow:hidden}
+  .chart-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:18px 18px 0 0}
+  .chart-box-blue::before{background:linear-gradient(90deg,#3b82f6,#7c3aed)}
+  .chart-box-green::before{background:linear-gradient(90deg,#22c55e,#14b8a6)}
+  .chart-box-orange::before{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+  .chart-title{font-size:11px;font-weight:800;color:rgba(255,255,255,.9);letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .chart-title-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dot-blue{background:#3b82f6;box-shadow:0 0 8px #3b82f6}
+  .dot-green{background:#22c55e;box-shadow:0 0 8px #22c55e}
+  .dot-orange{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+  .chart-subtitle{font-size:9px;color:rgba(255,255,255,.35);font-weight:500;margin-left:auto;font-family:'JetBrains Mono',monospace}
+  canvas{width:100%!important}
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+
+  /* ── TABLE ── */
+  .tbl-wrap{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.02));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.3),0 12px 40px rgba(0,0,0,.4)}
+  .tbl-hdr{background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(124,58,237,.2));padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1)}
+  .tbl-hdr-lbl{color:#fff;font-size:13px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+  .tbl-cnt{font-size:10px;color:rgba(255,255,255,.4);font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.07);padding:3px 10px;border-radius:20px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  thead tr:first-child th{background:rgba(30,58,138,.6);color:rgba(255,255,255,.9);padding:9px 7px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.06);white-space:nowrap}
+  thead tr:last-child th{background:rgba(30,41,59,.8);color:rgba(148,163,184,.9);padding:6px 7px;font-size:9px;font-weight:600;border-right:1px solid rgba(255,255,255,.05);white-space:nowrap}
+  tbody tr:hover td{background:rgba(255,255,255,.05)}
+  tbody tr.alt td{background:rgba(255,255,255,.02)}
+  tbody tr td{padding:7px 7px;border-bottom:1px solid rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.03);color:rgba(203,213,225,.85);vertical-align:middle}
+  tfoot td{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(124,58,237,.1));font-weight:800;font-size:11px;padding:9px 7px;border-top:2px solid rgba(59,130,246,.4);color:#e2e8f0}
+  .tr{text-align:right}.tl{text-align:left}.tc{text-align:center}
+  .num{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10.5px}
+  .grn{color:#4ade80;font-weight:700}.ylw{color:#fbbf24;font-weight:700}.red{color:#f87171;font-weight:700}.pur{color:#c084fc;font-weight:700}
+  td.grn{color:#4ade80}td.ylw{color:#fbbf24}td.red{color:#f87171}td.pur{color:#c084fc}
+
+  /* ── FOOTER ── */
+  .report-footer{margin-top:16px;text-align:center;font-size:10px;color:rgba(255,255,255,.2);font-weight:500;letter-spacing:.5px}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="logo-wrap">
+      <div class="logo-3d">📊</div>
+      <div>
+        <div class="hdr-title">GRN Status Dashboard</div>
+        <div class="hdr-sub">Date-wise Vehicle Inward · GRN Accomplishment · TAT Analysis</div>
+      </div>
+    </div>
+    <div class="hdr-meta">
+      <div class="hdr-date">Generated: ${generatedOn}</div>
+      <div class="hdr-range">📅 ${dateRange}</div>
+      <div class="hdr-badge"><span class="hdr-badge-dot"></span>GRN ${grnPct}% Accomplished</div>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="section-label">📊 Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi kpi-blue">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">Total Invoices</div>
+        <div class="kpi-val">${T.uInv}</div>
+        <div class="kpi-sub">${n(T.uBoxes)} boxes<br>${n(T.uQty)} units</div>
+      </div>
+    </div>
+    <div class="kpi kpi-green">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">GRN Done</div>
+        <div class="kpi-val">${T.dInv}</div>
+        <div class="kpi-sub">${n(T.dQty)} units<br>received</div>
+      </div>
+    </div>
+    <div class="kpi kpi-yellow">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">⏳</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">Under Process</div>
+        <div class="kpi-val">${T.upInv}</div>
+        <div class="kpi-sub">${n(T.upQty)} units<br>pending</div>
+      </div>
+    </div>
+    <div class="kpi kpi-red">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">Pending Issue</div>
+        <div class="kpi-val">${T.iInv}</div>
+        <div class="kpi-sub">${n(T.iQty)} units<br>affected</div>
+      </div>
+    </div>
+    <div class="kpi kpi-teal">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">Within TAT</div>
+        <div class="kpi-val">${withinPct}%</div>
+        <div class="kpi-sub">${n(T.within)} units<br>on-time</div>
+      </div>
+    </div>
+    <div class="kpi kpi-purple">
+      <div class="kpi-shadow"></div>
+      <div class="kpi-icon">🕒</div>
+      <div class="kpi-bar"></div>
+      <div class="kpi-inner">
+        <div class="kpi-lbl">Above TAT</div>
+        <div class="kpi-val">${abovePct}%</div>
+        <div class="kpi-sub">${n(T.above)} units<br>delayed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="section-label">📈 3D Chart Analytics</div>
+  <div class="charts-row">
+    <div class="chart-box chart-box-blue">
+      <div class="chart-title">
+        <span class="chart-title-dot dot-blue"></span>
+        Daily GRN Quantity Trend
+        <span class="chart-subtitle">${sortedDates.length} DAYS</span>
+      </div>
+      <canvas id="c1" height="190"></canvas>
+    </div>
+    <div class="chart-box chart-box-green">
+      <div class="chart-title">
+        <span class="chart-title-dot dot-green"></span>
+        GRN Status Mix
+        <span class="chart-subtitle">INV SPLIT</span>
+      </div>
+      <canvas id="c2" height="190"></canvas>
+    </div>
+    <div class="chart-box chart-box-orange">
+      <div class="chart-title">
+        <span class="chart-title-dot dot-orange"></span>
+        TAT Breakdown
+        <span class="chart-subtitle">PER DATE</span>
+      </div>
+      <canvas id="c3" height="190"></canvas>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section-label">📋 Date-wise Detailed Breakdown</div>
+  <div class="tbl-wrap">
+    <div class="tbl-hdr">
+      <span class="tbl-hdr-lbl">📋 Date-wise GRN Status — Detailed</span>
+      <span class="tbl-cnt">${sortedDates.length} DATES</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="tc" rowspan="2">#</th>
+          <th class="tl" rowspan="2">Date</th>
+          <th colspan="3" style="text-align:center;background:rgba(30,64,175,.6)">Vehicle Unloading</th>
+          <th colspan="1" style="text-align:center;background:rgba(21,128,61,.6)">GRN Qty</th>
+          <th colspan="1" style="text-align:center;background:rgba(180,83,9,.6)">Under Process</th>
+          <th colspan="1" style="text-align:center;background:rgba(185,28,28,.6)">Pending Issue</th>
+          <th colspan="1" style="text-align:center;background:rgba(109,40,217,.6)">Beyond Cap</th>
+          <th colspan="2" style="text-align:center;background:rgba(21,128,61,.6)">Within TAT</th>
+          <th colspan="2" style="text-align:center;background:rgba(185,28,28,.6)">Above TAT</th>
+        </tr>
+        <tr>
+          <th class="tc">Inv</th><th class="tr">Boxes</th><th class="tr">Inv Qty</th>
+          <th class="tr">GRN Qty</th>
+          <th class="tr">Qty</th>
+          <th class="tr">Qty</th>
+          <th class="tr">Qty</th>
+          <th class="tr">Qty</th><th class="tc">%</th>
+          <th class="tr">Qty</th><th class="tc">%</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+      <tfoot><tr>
+        <td colspan="2" class="tl">TOTAL (${sortedDates.length} dates)</td>
+        <td class="tr">${T.uInv}</td><td class="tr num">${n(T.uBoxes)}</td><td class="tr num">${n(T.uQty)}</td>
+        <td class="tr grn num">${n(T.dQty)}</td>
+        <td class="tr ylw num">${n(T.upQty)}</td>
+        <td class="tr red num">${n(T.iQty)}</td>
+        <td class="tr pur num">${n(T.bc)}</td>
+        <td class="tr grn num">${n(T.within)}</td><td class="tc grn">${withinPct}%</td>
+        <td class="tr red num">${n(T.above)}</td><td class="tc red">${abovePct}%</td>
+      </tr></tfoot>
+    </table>
+  </div>
+
+  <div class="report-footer">GRN·WMS Apparel — Auto-generated report · ${generatedOn} · For internal use only</div>
+</div>
+
+<script>
+const labels=${JSON.stringify(sortedDates)};
+const doneQty=${JSON.stringify(summary.map(r=>r.dQty))};
+const upQty=${JSON.stringify(summary.map(r=>r.upQty))};
+const issQty=${JSON.stringify(summary.map(r=>r.iQty))};
+const withinArr=${JSON.stringify(summary.map(r=>r.within))};
+const aboveArr=${JSON.stringify(summary.map(r=>r.above))};
+
+// ═══════════════════════════════════════════════════
+// PREMIUM 3D BAR PLUGIN — extruded top + right faces
+// ═══════════════════════════════════════════════════
+const plugin3DBar={
+  id:'bar3D',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx;
+    const datasets=chart.data.datasets;
+    datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      if(meta.hidden||meta.type!=='bar')return;
+      meta.data.forEach((bar,idx)=>{
+        if(!bar)return;
+        const props=bar.getProps(['x','y','width','base'],true);
+        const{x,y,width,base}=props;
+        if(!width)return;
+        const bH=Math.abs(base-y);
+        if(bH<2)return;
+        const rawColor=Array.isArray(ds.backgroundColor)?ds.backgroundColor[idx]:ds.backgroundColor;
+        const parseRgba=c=>{
+          if(!c)return{r:99,g:102,b:241,a:.85};
+          const m=c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+          return m?{r:+m[1],g:+m[2],b:+m[3],a:m[4]!==undefined?+m[4]:.85}:{r:99,g:102,b:241,a:.85};
+        };
+        const{r,g,b,a}=parseRgba(rawColor);
+        const depth=Math.max(5,Math.abs(width)*0.18);
+        const dY=depth*0.5;
+
+        // Top face — lighter
+        ctx.save();
+        const topGrad=ctx.createLinearGradient(x-width/2,y,x+width/2+depth,y-dY);
+        topGrad.addColorStop(0,\`rgba(\${Math.min(r+60,255)},\${Math.min(g+60,255)},\${Math.min(b+60,255)},\${Math.min(a+0.15,1)})\`);
+        topGrad.addColorStop(1,\`rgba(\${Math.min(r+30,255)},\${Math.min(g+30,255)},\${Math.min(b+30,255)},\${Math.min(a+0.05,1)})\`);
+        ctx.beginPath();
+        ctx.moveTo(x-width/2,y);
+        ctx.lineTo(x-width/2+depth,y-dY);
+        ctx.lineTo(x+width/2+depth,y-dY);
+        ctx.lineTo(x+width/2,y);
+        ctx.closePath();
+        ctx.fillStyle=topGrad;
+        ctx.fill();
+        // Top face border
+        ctx.strokeStyle=\`rgba(\${Math.min(r+80,255)},\${Math.min(g+80,255)},\${Math.min(b+80,255)},0.6)\`;
+        ctx.lineWidth=0.5;ctx.stroke();
+        ctx.restore();
+
+        // Right face — darker
+        ctx.save();
+        const rightGrad=ctx.createLinearGradient(x+width/2,y,x+width/2+depth,y-dY);
+        rightGrad.addColorStop(0,\`rgba(\${Math.max(r-40,0)},\${Math.max(g-40,0)},\${Math.max(b-40,0)},\${Math.min(a+0.1,1)})\`);
+        rightGrad.addColorStop(1,\`rgba(\${Math.max(r-70,0)},\${Math.max(g-70,0)},\${Math.max(b-70,0)},\${a})\`);
+        ctx.beginPath();
+        ctx.moveTo(x+width/2,y);
+        ctx.lineTo(x+width/2+depth,y-dY);
+        ctx.lineTo(x+width/2+depth,base-dY);
+        ctx.lineTo(x+width/2,base);
+        ctx.closePath();
+        ctx.fillStyle=rightGrad;
+        ctx.fill();
+        ctx.strokeStyle=\`rgba(\${Math.max(r-20,0)},\${Math.max(g-20,0)},\${Math.max(b-20,0)},0.4)\`;
+        ctx.lineWidth=0.5;ctx.stroke();
+        ctx.restore();
+      });
+    });
+  }
+};
+Chart.register(plugin3DBar);
+
+// ═══════════════════════════════════════════
+// DARK THEME CONFIG
+// ═══════════════════════════════════════════
+const gridLines={color:'rgba(148,163,184,.08)',lineWidth:1};
+const legendOpts={
+  position:'bottom',
+  labels:{
+    font:{size:10,weight:'600'},
+    boxWidth:10,padding:14,
+    usePointStyle:true,
+    color:'rgba(203,213,225,.8)'
+  }
+};
+const tooltipOpts={
+  backgroundColor:'rgba(15,23,42,.95)',
+  titleFont:{size:11,weight:'800'},
+  bodyFont:{size:11},
+  padding:12,cornerRadius:10,
+  borderColor:'rgba(99,102,241,.4)',
+  borderWidth:1,
+  titleColor:'#e2e8f0',
+  bodyColor:'#94a3b8'
+};
+const scaleTicksColor='rgba(148,163,184,.6)';
+
+// ═══════════════════════════════════════════
+// CHART 1 — 3D Stacked Bar: GRN Status Trend
+// ═══════════════════════════════════════════
+new Chart(document.getElementById('c1'),{
+  type:'bar',
+  data:{
+    labels,
+    datasets:[
+      {
+        label:'GRN Done',
+        data:doneQty,
+        backgroundColor:'rgba(34,197,94,.85)',
+        borderColor:'rgba(74,222,128,.4)',
+        borderWidth:1,
+        borderRadius:{topLeft:3,topRight:3},
+        borderSkipped:false,
+        stack:'s'
+      },
+      {
+        label:'Under Process',
+        data:upQty,
+        backgroundColor:'rgba(245,158,11,.82)',
+        borderColor:'rgba(251,191,36,.3)',
+        borderWidth:1,
+        borderRadius:0,
+        borderSkipped:false,
+        stack:'s'
+      },
+      {
+        label:'Pending Issue',
+        data:issQty,
+        backgroundColor:'rgba(239,68,68,.82)',
+        borderColor:'rgba(248,113,113,.3)',
+        borderWidth:1,
+        borderRadius:0,
+        borderSkipped:false,
+        stack:'s'
+      }
+    ]
+  },
+  options:{
+    responsive:true,
+    animation:{duration:1200,easing:'easeOutQuart'},
+    plugins:{
+      legend:legendOpts,
+      tooltip:{...tooltipOpts,mode:'index'},
+      bar3D:{}
+    },
+    scales:{
+      x:{
+        grid:{...gridLines},
+        ticks:{font:{size:9},maxRotation:45,color:scaleTicksColor},
+        border:{color:'rgba(148,163,184,.15)'}
+      },
+      y:{
+        stacked:true,
+        grid:{...gridLines},
+        ticks:{font:{size:9},color:scaleTicksColor},
+        border:{color:'rgba(148,163,184,.15)'}
+      }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// CHART 2 — 3D-Style Doughnut with glow + center KPI
+// ═══════════════════════════════════════════════════
+const grnTotal=${T.dInv}+${T.upInv}+${T.iInv};
+const grnDonePct=grnTotal>0?(${T.dInv}/grnTotal*100).toFixed(0):0;
+
+const glowPlugin={
+  id:'doughnutGlow',
+  beforeDraw(chart){
+    const{ctx}=chart;
+    ctx.save();
+    // outer ring glow
+    const cx=chart.chartArea.left+(chart.chartArea.width/2);
+    const cy=chart.chartArea.top+(chart.chartArea.height/2);
+    const outerR=Math.min(chart.chartArea.width,chart.chartArea.height)/2;
+    const glow=ctx.createRadialGradient(cx,cy,outerR*0.5,cx,cy,outerR*1.1);
+    glow.addColorStop(0,'rgba(34,197,94,0)');
+    glow.addColorStop(0.7,'rgba(34,197,94,.04)');
+    glow.addColorStop(1,'rgba(34,197,94,.12)');
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.arc(cx,cy,outerR*1.15,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  },
+  afterDraw(chart){
+    const{ctx,chartArea:{width,height,left,top}}=chart;
+    const cx=left+width/2,cy=top+height/2;
+    ctx.save();
+    // center value
+    ctx.font='700 24px JetBrains Mono, monospace';
+    ctx.fillStyle='#f1f5f9';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(grnTotal,cx,cy-11);
+    // center label
+    ctx.font='600 8px Inter, sans-serif';
+    ctx.fillStyle='rgba(148,163,184,.7)';
+    ctx.letterSpacing='1px';
+    ctx.fillText('TOTAL INV',cx,cy+8);
+    // small % badge
+    ctx.font='700 10px Inter, sans-serif';
+    ctx.fillStyle='#4ade80';
+    ctx.fillText(grnDonePct+'% DONE',cx,cy+22);
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('c2'),{
+  type:'doughnut',
+  plugins:[glowPlugin],
+  data:{
+    labels:['GRN Done','Under Process','Pending Issue'],
+    datasets:[{
+      data:[${T.dInv},${T.upInv},${T.iInv}],
+      backgroundColor:['rgba(34,197,94,.9)','rgba(245,158,11,.9)','rgba(239,68,68,.9)'],
+      borderWidth:4,
+      borderColor:'rgba(15,23,42,.8)',
+      hoverOffset:12,
+      hoverBorderWidth:3,
+      hoverBorderColor:'rgba(255,255,255,.3)'
+    }]
+  },
+  options:{
+    responsive:true,
+    cutout:'60%',
+    animation:{animateRotate:true,duration:1400,easing:'easeOutBack'},
+    plugins:{
+      legend:legendOpts,
+      tooltip:tooltipOpts,
+      doughnutGlow:{}
+    }
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// CHART 3 — 3D Grouped Bar: Within TAT vs Above TAT
+// ════════════════════════════════════════════════════════
+new Chart(document.getElementById('c3'),{
+  type:'bar',
+  data:{
+    labels,
+    datasets:[
+      {
+        label:'Within TAT',
+        data:withinArr,
+        backgroundColor:'rgba(34,197,94,.85)',
+        borderColor:'rgba(74,222,128,.4)',
+        borderWidth:1,
+        borderRadius:{topLeft:3,topRight:3},
+        borderSkipped:false
+      },
+      {
+        label:'Above TAT',
+        data:aboveArr,
+        backgroundColor:'rgba(239,68,68,.82)',
+        borderColor:'rgba(248,113,113,.3)',
+        borderWidth:1,
+        borderRadius:{topLeft:3,topRight:3},
+        borderSkipped:false
+      }
+    ]
+  },
+  options:{
+    responsive:true,
+    animation:{duration:1200,easing:'easeOutQuart'},
+    plugins:{
+      legend:legendOpts,
+      tooltip:tooltipOpts,
+      bar3D:{}
+    },
+    scales:{
+      x:{
+        grid:{...gridLines},
+        ticks:{font:{size:9},maxRotation:45,color:scaleTicksColor},
+        border:{color:'rgba(148,163,184,.15)'}
+      },
+      y:{
+        grid:{...gridLines},
+        ticks:{font:{size:9},color:scaleTicksColor},
+        border:{color:'rgba(148,163,184,.15)'}
+      }
+    }
+  }
+});
+<\/script>
+</body></html>`;
+
+  const win=window.open('','_blank','width=1400,height=960');
+  win.document.write(html);
+  win.document.close();
+  toast('3D Report opened in new window — use Print to save as PDF','ok');
+}
 
 
 let _tt;
