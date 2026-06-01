@@ -9,20 +9,20 @@
 <meta name="apple-mobile-web-app-title" content="GRN·WMS">
 <meta name="theme-color" content="#2563eb">
 <title>GRN·WMS Apparel v9 — Live Sync</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Familjen+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f0f4ff;--surface:#eef1ff;--card:#fff;--card2:#f8f9ff;
   --border:#d4d9f0;--border2:#b8c0e8;
   --ink:#0d1240;--ink2:#2a3570;--ink3:#7080b8;
-  --accent:#2563eb;--accent-d:rgba(37,99,235,.1);
+  --accent:#2563eb;
   --green:#059669;--green-d:rgba(5,150,105,.1);
   --lime:#059669;
   --red:#dc2626;--red-d:rgba(220,38,38,.08);
   --orange:#d97706;--orange-d:rgba(217,119,6,.09);
   --yellow:#b45309;--yellow-d:rgba(180,83,9,.09);
   --teal:#0891b2;--teal-d:rgba(8,145,178,.09);
-  --purple:#7c3aed;--purple-d:rgba(124,58,237,.09);
+  --purple:#7c3aed;
   --mrp:#be185d;--mrp-d:rgba(190,24,93,.08);
   --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   --font-mono:'JetBrains Mono','Fira Code','Consolas',monospace;
@@ -428,10 +428,6 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
 .smt.active{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.25)}
 .smt:hover:not(.active){background:#fff;color:var(--ink)}
 .bulk-panel{display:none}.bulk-panel.show{display:block}
-.bulk-textarea{width:100%;min-height:100px;padding:10px 13px;background:#fff;border:2px solid var(--border);border-radius:9px;font-family:var(--font-mono);font-size:12px;color:var(--ink);outline:none;resize:vertical;letter-spacing:1px;line-height:1.8;transition:border-color .15s,box-shadow .15s}
-.bulk-textarea:focus{border-color:var(--accent);box-shadow:var(--ga)}
-.bulk-textarea::placeholder{color:var(--ink3);font-size:11px}
-.bulk-hint{font-size:10px;color:var(--ink3);margin-top:5px;line-height:1.6}
 .bulk-preview{background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;margin-top:8px;display:none}
 .bulk-preview.show{display:block}
 .bulk-preview-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink3);margin-bottom:6px;display:flex;justify-content:space-between;font-weight:700}
@@ -839,6 +835,250 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
   .sz-breakdown-grid{grid-template-columns:repeat(2,1fr)!important;}
   #cartonSzEditGrid{grid-template-columns:repeat(2,1fr)!important;}
 }
+
+/* ══════════════════════════════════════════════════
+   GRN DASHBOARD — 3D KPI LABEL TEMPLATES
+══════════════════════════════════════════════════ */
+.gd-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  align-items:stretch;
+  margin-bottom:4px;
+}
+@media(max-width:900px){.gd-kpi-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.gd-kpi-grid{grid-template-columns:1fr;}}
+
+/* ── Base 3D card ── */
+.gd-kpi-card{
+  position:relative;
+  border-radius:16px;
+  overflow:visible;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  /* 3-D lift effect */
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 6px 0 rgba(0,0,0,.18),
+    0 10px 30px rgba(0,0,0,.16),
+    0 2px 6px rgba(0,0,0,.12);
+  transform:translateY(0);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.gd-kpi-card:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 10px 0 rgba(0,0,0,.18),
+    0 18px 40px rgba(0,0,0,.2),
+    0 4px 10px rgba(0,0,0,.12);
+}
+/* 3-D bottom edge */
+.gd-kpi-card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  background:inherit;
+  filter:brightness(.65);
+  transform:translateY(6px);
+  z-index:-1;
+}
+/* Shine overlay */
+.gd-kpi-card::after{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:45%;
+  border-radius:16px 16px 0 0;
+  background:linear-gradient(180deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,.0) 100%);
+  pointer-events:none;
+  z-index:2;
+}
+
+/* ── Card header band ── */
+.gd-kpi-hdr{
+  position:relative;z-index:1;
+  padding:11px 14px 9px;
+  border-radius:16px 16px 0 0;
+  display:flex;align-items:center;gap:8px;
+}
+.gd-kpi-icon{
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+  background:rgba(255,255,255,.22);
+  box-shadow:0 2px 6px rgba(0,0,0,.18),0 1px 0 rgba(255,255,255,.35) inset;
+}
+.gd-kpi-title{
+  font-size:10px;font-weight:800;letter-spacing:.9px;
+  text-transform:uppercase;color:#fff;
+  line-height:1.25;flex:1;min-width:0;
+  text-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+.gd-kpi-date{
+  font-size:9px;font-weight:700;font-family:var(--font-mono);
+  color:rgba(255,255,255,.7);flex-shrink:0;
+}
+
+/* ── Card body ── */
+.gd-kpi-body{
+  position:relative;z-index:1;
+  background:#fff;
+  border-radius:0 0 16px 16px;
+  flex:1;display:flex;flex-direction:column;
+}
+.gd-kpi-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 14px;
+  gap:8px;
+}
+.gd-kpi-row+.gd-kpi-row{border-top:1px solid rgba(0,0,20,.07);}
+.gd-kpi-row-left{display:flex;align-items:center;gap:7px;min-width:0;}
+.gd-kpi-row-icon{font-size:14px;flex-shrink:0;}
+.gd-kpi-row-label{font-size:11px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gd-kpi-row-val{
+  font-family:var(--font-mono);font-size:17px;font-weight:800;
+  flex-shrink:0;margin-left:8px;
+  /* small drop-shadow on number */
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.1));
+}
+/* sub-line for TAT % */
+.gd-kpi-row-sub{font-size:10px;font-weight:700;margin-top:1px;}
+
+/* ── Per-card colour themes ── */
+/* Inward — vivid blue */
+.gd-kpi-inward .gd-kpi-hdr{background:linear-gradient(135deg,#1d4ed8,#3b82f6,#60a5fa);}
+.gd-kpi-inward::before{background:linear-gradient(135deg,#1e40af,#2563eb);}
+.gd-kpi-inward .gd-kpi-row-val{color:#1d4ed8;}
+
+/* GRN Qty — vivid emerald */
+.gd-kpi-grn .gd-kpi-hdr{background:linear-gradient(135deg,#065f46,#059669,#34d399);}
+.gd-kpi-grn::before{background:linear-gradient(135deg,#064e3b,#047857);}
+.gd-kpi-grn .gd-kpi-row-val{color:#065f46;}
+
+/* Under Process — vivid amber */
+.gd-kpi-under .gd-kpi-hdr{background:linear-gradient(135deg,#92400e,#d97706,#fbbf24);}
+.gd-kpi-under::before{background:linear-gradient(135deg,#78350f,#b45309);}
+.gd-kpi-under .gd-kpi-row-val{color:#b45309;}
+
+/* Pending w/ Issue — vivid red */
+.gd-kpi-issue .gd-kpi-hdr{background:linear-gradient(135deg,#991b1b,#dc2626,#f87171);}
+.gd-kpi-issue::before{background:linear-gradient(135deg,#7f1d1d,#b91c1c);}
+.gd-kpi-issue .gd-kpi-row-val{color:#dc2626;}
+
+/* TAT — vivid purple */
+.gd-kpi-tat .gd-kpi-hdr{background:linear-gradient(135deg,#4c1d95,#7c3aed,#a78bfa);}
+.gd-kpi-tat::before{background:linear-gradient(135deg,#3b0764,#6d28d9);}
+.gd-kpi-tat .gd-kpi-row-val.tat-within{color:#059669;}
+.gd-kpi-tat .gd-kpi-row-val.tat-above{color:#dc2626;}
+
+/* ══════════════════════════════════════════════════
+   GRN DASHBOARD — VIBRANT COLOUR TABLE
+══════════════════════════════════════════════════ */
+/* Wrap the GRN dashboard table with an id for scoped overrides */
+#gdTable{
+  border-collapse:separate;
+  border-spacing:0;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:11px;
+}
+
+/* Group header row */
+#gdTable thead tr:first-child th{
+  padding:8px 12px;
+  font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  border-bottom:none;
+  position:sticky;top:0;z-index:5;
+  white-space:nowrap;
+}
+/* Sub-header row */
+#gdTable thead tr:nth-child(2) th{
+  padding:7px 10px;
+  font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  border-bottom:3px solid rgba(0,0,0,.08);
+  position:sticky;top:36px;z-index:5;
+  white-space:nowrap;
+  text-align:right;
+}
+
+/* ── Group colouring — applied via inline style in HTML but override backgrounds here ── */
+/* Unloading — vivid blue */
+#gdTable .gd-col-unload{background:linear-gradient(180deg,#dbeafe,#bfdbfe)!important;color:#1e3a8a!important;border-left:2px solid #93c5fd;}
+#gdTable .gd-col-unload-sub{background:linear-gradient(180deg,#eff6ff,#dbeafe)!important;color:#1d4ed8!important;border-left:2px solid #93c5fd;}
+#gdTable td.gd-col-unload-cell{background:linear-gradient(180deg,#f0f7ff,#e8f2ff)!important;color:#1d4ed8;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-unload-cell{background:#e0eeff!important;}
+
+/* Accomplished GRN — vivid green */
+#gdTable .gd-col-grn{background:linear-gradient(180deg,#a7f3d0,#6ee7b7)!important;color:#064e3b!important;border-left:2px solid #34d399;}
+#gdTable .gd-col-grn-sub{background:linear-gradient(180deg,#ecfdf5,#d1fae5)!important;color:#065f46!important;border-left:2px solid #34d399;}
+#gdTable td.gd-col-grn-cell{background:linear-gradient(180deg,#f0fdf8,#e8fdf2)!important;color:#065f46;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-grn-cell{background:#dcfce7!important;}
+
+/* Under Process — vivid amber */
+#gdTable .gd-col-under{background:linear-gradient(180deg,#fde68a,#fcd34d)!important;color:#78350f!important;border-left:2px solid #fbbf24;}
+#gdTable .gd-col-under-sub{background:linear-gradient(180deg,#fffbeb,#fef3c7)!important;color:#92400e!important;border-left:2px solid #fbbf24;}
+#gdTable td.gd-col-under-cell{background:linear-gradient(180deg,#fffef0,#fffbe8)!important;color:#b45309;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-under-cell{background:#fef9c3!important;}
+
+/* Pending w/ Issue — vivid red */
+#gdTable .gd-col-issue{background:linear-gradient(180deg,#fecaca,#fca5a5)!important;color:#7f1d1d!important;border-left:2px solid #f87171;}
+#gdTable .gd-col-issue-sub{background:linear-gradient(180deg,#fff1f2,#ffe4e6)!important;color:#991b1b!important;border-left:2px solid #f87171;}
+#gdTable td.gd-col-issue-cell{background:linear-gradient(180deg,#fff8f8,#fff0f0)!important;color:#dc2626;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-issue-cell{background:#fee2e2!important;}
+
+/* Total Pendency — vivid orange */
+#gdTable .gd-col-pend{background:linear-gradient(180deg,#fed7aa,#fdba74)!important;color:#7c2d12!important;border-left:2px solid #fb923c;}
+#gdTable .gd-col-pend-sub{background:linear-gradient(180deg,#fff7ed,#ffedd5)!important;color:#9a3412!important;border-left:2px solid #fb923c;}
+#gdTable td.gd-col-pend-cell{background:linear-gradient(180deg,#fff9f0,#fff4e8)!important;color:#ea580c;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-pend-cell{background:#fed7aa!important;}
+
+/* TAT — vivid purple */
+#gdTable .gd-col-tat{background:linear-gradient(180deg,#ddd6fe,#c4b5fd)!important;color:#3b0764!important;border-left:2px solid #a78bfa;}
+#gdTable .gd-col-tat-sub{background:linear-gradient(180deg,#f5f3ff,#ede9fe)!important;color:#4c1d95!important;border-left:2px solid #a78bfa;}
+#gdTable td.gd-col-tat-cell.tat-beyond{color:#7c3aed;font-weight:700;}
+#gdTable td.gd-col-tat-cell.tat-above{color:#dc2626;font-weight:700;}
+#gdTable td.gd-col-tat-cell.tat-within{color:#059669;font-weight:700;}
+#gdTable td.gd-col-tat-cell.tat-pct-above{color:#dc2626;font-weight:700;}
+#gdTable td.gd-col-tat-cell.tat-pct-within{color:#059669;font-weight:700;}
+#gdTable td.gd-col-tat-cell{background:linear-gradient(180deg,#faf8ff,#f5f0ff)!important;font-weight:600;}
+#gdTable tr:nth-child(even) td.gd-col-tat-cell{background:#ede9fe!important;}
+
+/* Frozen # and Date columns */
+#gdTable td.ps-fr{background:linear-gradient(180deg,#f0f3ff,#e8edff)!important;}
+#gdTable tr:nth-child(even) td.ps-fr{background:#e8edff!important;}
+#gdTable tr:hover td.ps-fr{background:#dde5ff!important;}
+#gdTable tr:hover td{filter:brightness(.97);}
+
+/* TOTAL row */
+#gdTable .gd-total-row td{
+  font-weight:800!important;
+  border-top:3px solid #7c9ee0!important;
+  font-size:11.5px;
+}
+#gdTable .gd-total-row td.ps-fr{background:linear-gradient(135deg,#c7d2fe,#a5b4fc)!important;color:#1e3a8a!important;}
+#gdTable .gd-total-row td.gd-col-unload-cell{background:linear-gradient(135deg,#bfdbfe,#93c5fd)!important;color:#1e40af!important;}
+#gdTable .gd-total-row td.gd-col-grn-cell{background:linear-gradient(135deg,#a7f3d0,#6ee7b7)!important;color:#065f46!important;}
+#gdTable .gd-total-row td.gd-col-under-cell{background:linear-gradient(135deg,#fde68a,#fcd34d)!important;color:#78350f!important;}
+#gdTable .gd-total-row td.gd-col-issue-cell{background:linear-gradient(135deg,#fecaca,#fca5a5)!important;color:#7f1d1d!important;}
+#gdTable .gd-total-row td.gd-col-pend-cell{background:linear-gradient(135deg,#fed7aa,#fdba74)!important;color:#7c2d12!important;}
+#gdTable .gd-total-row td.gd-col-tat-cell{background:linear-gradient(135deg,#ddd6fe,#c4b5fd)!important;color:#3b0764!important;}
+
+/* animated top border on group headers */
+#gdTable thead tr:first-child th.gd-col-unload{border-top:3px solid #3b82f6;}
+#gdTable thead tr:first-child th.gd-col-grn{border-top:3px solid #10b981;}
+#gdTable thead tr:first-child th.gd-col-under{border-top:3px solid #f59e0b;}
+#gdTable thead tr:first-child th.gd-col-issue{border-top:3px solid #ef4444;}
+#gdTable thead tr:first-child th.gd-col-pend{border-top:3px solid #f97316;}
+#gdTable thead tr:first-child th.gd-col-tat{border-top:3px solid #8b5cf6;}
+
+/* freeze-bar animation on sub-header */
+#gdTable thead tr:nth-child(2) th::after{
+  content:'';display:block;
+  position:absolute;bottom:-3px;left:0;right:0;height:3px;
+  background:inherit;filter:brightness(.65);
+}
 </style>
 <body>
 <div class="page-hero"></div>
@@ -1131,17 +1371,50 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
               <div style="position:relative">
                 <pre id="gs-script-code" style="background:#0d1117;border-radius:8px;padding:10px 12px;font-size:10px;color:#7ee787;line-height:1.6;overflow-x:auto;white-space:pre;margin:0">function doGet(e){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
-  var sh=ss.getActiveSheet();
-  var data=sh.getDataRange().getValues();
+  var sheetName=e&amp;&amp;e.parameter&amp;&amp;e.parameter.sheet?e.parameter.sheet:'';
+  var sh=sheetName?ss.getSheetByName(sheetName):ss.getActiveSheet();
+  if(!sh){
+    var out=ContentService.createTextOutput(JSON.stringify({error:'Sheet "'+sheetName+'" not found. Available: '+ss.getSheets().map(function(s){return s.getName();}).join(', ')}));
+    out.setMimeType(ContentService.MimeType.JSON);
+    return out;
+  }
+  var action=e&amp;&amp;e.parameter&amp;&amp;e.parameter.action?e.parameter.action:'data';
+  // ?action=hash — returns only row count + last-modified stamp (ultra-lightweight)
+  // Used by the auto-sync poller to detect changes before doing a full fetch.
+  if(action==='hash'){
+    var range=sh.getDataRange();
+    var vals=range.getValues();
+    var rowCount=vals.length-1; // exclude header
+    // Build a cheap hash: concatenate last 3 rows + row count
+    var tail='';
+    var start=Math.max(1,vals.length-3);
+    for(var i=start;i&lt;vals.length;i++)tail+=vals[i].join('|');
+    var hashStr=rowCount+':'+tail.length+':'+tail.slice(0,120);
+    var out=ContentService.createTextOutput(JSON.stringify({hash:hashStr,rows:rowCount,ts:Date.now()}));
+    out.setMimeType(ContentService.MimeType.JSON);
+    return out;
+  }
+  // Default: full data fetch
+  var range=sh.getDataRange();
+  var data=range.getValues();
+  var disp=range.getDisplayValues();
   var headers=data[0];
+  var poIdx=-1,invIdx=-1;
+  for(var j=0;j&lt;headers.length;j++){
+    var h=String(headers[j]).toLowerCase().replace(/[\s._-]+/g,'');
+    if(h==='pono'||h==='ponumber'||h==='purchaseorderno'||h==='po')poIdx=j;
+    if(h==='invoiceno'||h==='invno'||h==='invoicenumber'||h==='invoice#'||h==='inv#')invIdx=j;
+  }
   var rows=[];
   for(var i=1;i&lt;data.length;i++){
     if(!data[i][0]&amp;&amp;!data[i][1])continue;
     var row={};
-    for(var j=0;j&lt;headers.length;j++)row[headers[j]]=data[i][j];
+    for(var j=0;j&lt;headers.length;j++){
+      row[headers[j]]=(j===poIdx||j===invIdx)?disp[i][j]:data[i][j];
+    }
     rows.push(row);
   }
-  var out=ContentService.createTextOutput(JSON.stringify({data:rows}));
+  var out=ContentService.createTextOutput(JSON.stringify({sheet:sh.getName(),data:rows}));
   out.setMimeType(ContentService.MimeType.JSON);
   return out;
 }</pre>
@@ -1152,14 +1425,58 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
             <!-- Tab 2: Fetch -->
             <div id="gs-panel-2" style="display:none">
               <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Paste the <strong style="color:var(--ink2)">Web App URL</strong> from your Apps Script deployment:</div>
-              <input class="field-input" id="gsheet-inward-url" placeholder="https://script.google.com/macros/s/&#x2026;/exec" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:8px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetUrlInput()">
+              <input class="field-input" id="gsheet-inward-url" placeholder="https://script.google.com/macros/s/&#x2026;/exec" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetUrlInput()">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                <span style="font-size:10px;color:var(--ink3);white-space:nowrap;font-weight:700">&#x1F4CB; Worksheet/Tab:</span>
+                <input class="field-input" id="gsheet-inward-sheet" placeholder="Sheet tab name (blank = active sheet)" style="flex:1;font-size:10px;padding:5px 9px;font-family:var(--font-mono)" autocomplete="off" spellcheck="false" oninput="onGSheetSheetInput()" title="Enter the exact worksheet tab name inside the Google Sheet">
+              </div>
+              <div id="gs-sheet-hint" style="display:none;font-size:9px;color:var(--teal);margin-bottom:6px;padding:4px 8px;background:rgba(8,145,178,.07);border-radius:5px;border:1px solid rgba(8,145,178,.2)">
+                &#x1F4CC; Will fetch from worksheet: <strong id="gs-sheet-hint-name"></strong>
+              </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <button class="btn btn-lime btn-sm" id="gsheet-fetch-btn" onclick="fetchGSheetInward()" disabled style="flex:1;justify-content:center">&#x2B07; Fetch from Sheet</button>
                 <button class="btn btn-ghost btn-sm" id="gsheet-auto-btn" onclick="toggleGSheetAutoSync()" style="font-size:10px;white-space:nowrap">&#x1F504; Auto-sync: OFF</button>
                 <button class="btn btn-ghost btn-sm" onclick="debugGSheetCols()" style="font-size:10px;white-space:nowrap" title="Show raw column names from sheet">&#x1F50D; Debug Cols</button>
               </div>
+              <!-- Live sync status strip -->
+              <div id="gs-livesync-strip" style="display:flex;align-items:center;gap:8px;margin-top:7px;padding:5px 10px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:7px;flex-wrap:wrap">
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite"></span>
+                <span style="font-size:10px;font-weight:700;color:var(--green)" id="gs-sync-status">✅ Live</span>
+                <span style="font-size:9px;color:var(--ink3);margin-left:auto;font-family:var(--font-mono)" id="gs-sync-countdown">next check in 15s</span>
+              </div>
               <div id="gsheet-status" style="display:none;margin-top:7px;font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px"></div>
               <div id="gsheet-debug" style="display:none;margin-top:7px;background:#0d1117;border-radius:8px;padding:9px 12px;font-size:10px;color:#7ee787;font-family:monospace;line-height:1.6;word-break:break-all"></div>
+              <!-- Column Override -->
+              <div id="gs-col-override-panel" style="margin-top:8px;padding:9px 11px;background:#fffbeb;border:1.5px solid rgba(217,119,6,.25);border-radius:8px">
+                <div style="font-size:9px;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">&#x1F527; Column Name Override <span style="font-weight:400;color:var(--ink3)">(if your headers differ)</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">PO No. column</div>
+                    <input class="field-input" id="gs-col-po" placeholder="e.g. PO Number" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">Invoice No. column</div>
+                    <input class="field-input" id="gs-col-inv" placeholder="e.g. Invoice Number" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">Vendor Name column</div>
+                    <input class="field-input" id="gs-col-vendor" placeholder="e.g. Supplier" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">Date column</div>
+                    <input class="field-input" id="gs-col-date" placeholder="e.g. Arrival Date" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">Invoice Qty column</div>
+                    <input class="field-input" id="gs-col-qty" placeholder="e.g. Qty" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <div style="font-size:9px;color:var(--ink3);margin-bottom:2px">No. of Cartons column</div>
+                    <input class="field-input" id="gs-col-cartons" placeholder="e.g. Boxes" style="font-size:10px;padding:4px 8px;font-family:var(--font-mono)" oninput="saveGsColOverrides()" autocomplete="off" spellcheck="false">
+                  </div>
+                </div>
+                <div style="font-size:9px;color:var(--ink3);margin-top:6px">Leave blank to use auto-detection. After entering, click <b>Fetch from Sheet</b> again.</div>
+              </div>
             </div>
           </div>
 
@@ -1213,8 +1530,8 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
     </div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-    <input class="field-input" id="psDateFilter" placeholder="Filter by date…" oninput="renderPOStatus()" style="width:130px;padding:6px 10px;font-size:11px">
-    <input class="field-input" id="psPOFilter" placeholder="Filter by PO No…" oninput="renderPOStatus()" list="ps-po-datalist" style="width:160px;padding:6px 10px;font-size:11px">
+    <input class="field-input" id="psDateFilter" placeholder="Filter by date…" oninput="debouncedSync('psDateF',renderPOStatus,300)" style="width:130px;padding:6px 10px;font-size:11px">
+    <input class="field-input" id="psPOFilter" placeholder="Filter by PO No…" oninput="debouncedSync('psPOF',renderPOStatus,300)" list="ps-po-datalist" style="width:160px;padding:6px 10px;font-size:11px">
     <datalist id="ps-po-datalist"></datalist>
     <select class="field-select" id="psScanStatus" onchange="renderPOStatus()" style="width:130px;padding:6px 10px;font-size:11px">
       <option value="">All Scanning Status</option>
@@ -1285,7 +1602,8 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
       <button class="btn btn-ghost btn-xs" onclick="document.getElementById('gdDateFrom').value='';document.getElementById('gdDateTo').value='';renderGRNDash()">✕ Clear</button>
       <button class="btn btn-lime btn-sm" onclick="renderGRNDash()" style="font-weight:800">Refresh</button>
       <button class="btn btn-ghost btn-sm" onclick="exportGRNDash()">⬇ CSV</button>
-      <button class="btn btn-lime btn-sm" onclick="exportGRNDashImage()" style="font-weight:800">🖼 Report</button>
+      <button class="btn btn-primary btn-sm" onclick="exportGRNDashExcel()" style="font-weight:800;background:linear-gradient(135deg,#1d6f42,#21a366);box-shadow:0 2px 10px rgba(29,111,66,.35)">📊 Excel</button>
+      <button class="btn btn-lime btn-sm" onclick="exportGRNDashImage()" style="font-weight:800">🖼 JPEG Report</button>
     </div>
   </div>
   <div id="gdKpiStrip" style="margin-bottom:14px;width:100%;min-width:0;overflow:hidden"></div>
@@ -1298,36 +1616,36 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
       <table class="ps-sheet-table" id="gdTable">
         <thead>
           <tr>
-            <th class="ps-fr ps-fr-num" rowspan="2">#</th>
-            <th class="ps-fr ps-fr-date" rowspan="2" style="min-width:100px">Vehicle Arrived Date</th>
-            <th colspan="3" style="text-align:center;color:var(--accent);background:linear-gradient(180deg,#e8f0ff,#dce6ff)">Vehicle Unloading Details</th>
-            <th colspan="3" style="text-align:center;color:var(--green);background:linear-gradient(180deg,#e8fdf0,#d4f7e4)">Accomplished GRN Details</th>
-            <th colspan="3" style="text-align:center;color:var(--yellow);background:linear-gradient(180deg,#fffbeb,#fef3c7)">Under Process</th>
-            <th colspan="3" style="text-align:center;color:var(--red);background:linear-gradient(180deg,#fff1f2,#ffe4e6)">GRN Pending with Issue</th>
-            <th colspan="3" style="text-align:center;color:var(--orange);background:linear-gradient(180deg,#fff7ed,#ffedd5)">Total Pendency</th>
-            <th colspan="5" style="text-align:center;color:var(--purple);background:linear-gradient(180deg,#f5f3ff,#ede9fe)">TAT</th>
+            <th class="ps-fr ps-fr-num" rowspan="2" style="background:linear-gradient(180deg,#c7d2fe,#a5b4fc);color:#1e3a8a;text-align:center;vertical-align:middle">#</th>
+            <th class="ps-fr ps-fr-date" rowspan="2" style="min-width:110px;background:linear-gradient(180deg,#c7d2fe,#a5b4fc);color:#1e3a8a;vertical-align:middle">Vehicle Arrived Date</th>
+            <th colspan="3" class="gd-col-unload" style="text-align:center">🚛 Vehicle Unloading Details</th>
+            <th colspan="3" class="gd-col-grn" style="text-align:center">✅ Accomplished GRN Details</th>
+            <th colspan="3" class="gd-col-under" style="text-align:center">⏳ Under Process</th>
+            <th colspan="3" class="gd-col-issue" style="text-align:center">⚠️ GRN Pending with Issue</th>
+            <th colspan="3" class="gd-col-pend" style="text-align:center">📋 Total Pendency</th>
+            <th colspan="5" class="gd-col-tat" style="text-align:center">⏱ TAT (Turnaround Time)</th>
           </tr>
           <tr>
-            <th class="ps-num-hd" style="color:var(--accent)">No. of Inv.</th>
-            <th class="ps-num-hd" style="color:var(--accent)">Total Boxes</th>
-            <th class="ps-num-hd" style="color:var(--accent)">Total Inv. Qty</th>
-            <th class="ps-num-hd" style="color:var(--green)">No. of Inv.</th>
-            <th class="ps-num-hd" style="color:var(--green)">Total Boxes</th>
-            <th class="ps-num-hd" style="color:var(--green)">Total Received Qty</th>
-            <th class="ps-num-hd" style="color:var(--yellow)">No. of Inv.</th>
-            <th class="ps-num-hd" style="color:var(--yellow)">Total Boxes</th>
-            <th class="ps-num-hd" style="color:var(--yellow)">Total Inv. Qty</th>
-            <th class="ps-num-hd" style="color:var(--red)">No. of Inv.</th>
-            <th class="ps-num-hd" style="color:var(--red)">Total Boxes</th>
-            <th class="ps-num-hd" style="color:var(--red)">Total Inv. Qty</th>
-            <th class="ps-num-hd" style="color:var(--orange)">No. of Inv.</th>
-            <th class="ps-num-hd" style="color:var(--orange)">Total Boxes</th>
-            <th class="ps-num-hd" style="color:var(--orange)">Total Inv. Qty</th>
-            <th class="ps-num-hd" style="color:var(--purple)">Beyond the Capacity</th>
-            <th class="ps-num-hd" style="color:var(--red)">Above TAT</th>
-            <th class="ps-num-hd" style="color:var(--green)">Within TAT</th>
-            <th class="ps-num-hd" style="color:var(--red)">Above TAT (%)</th>
-            <th class="ps-num-hd" style="color:var(--green)">Within TAT (%)</th>
+            <th class="ps-num-hd gd-col-unload-sub">No. of Inv.</th>
+            <th class="ps-num-hd gd-col-unload-sub">Total Boxes</th>
+            <th class="ps-num-hd gd-col-unload-sub">Total Inv. Qty</th>
+            <th class="ps-num-hd gd-col-grn-sub">No. of Inv.</th>
+            <th class="ps-num-hd gd-col-grn-sub">Total Boxes</th>
+            <th class="ps-num-hd gd-col-grn-sub">Total Received Qty</th>
+            <th class="ps-num-hd gd-col-under-sub">No. of Inv.</th>
+            <th class="ps-num-hd gd-col-under-sub">Total Boxes</th>
+            <th class="ps-num-hd gd-col-under-sub">Total Inv. Qty</th>
+            <th class="ps-num-hd gd-col-issue-sub">No. of Inv.</th>
+            <th class="ps-num-hd gd-col-issue-sub">Total Boxes</th>
+            <th class="ps-num-hd gd-col-issue-sub">Total Inv. Qty</th>
+            <th class="ps-num-hd gd-col-pend-sub">No. of Inv.</th>
+            <th class="ps-num-hd gd-col-pend-sub">Total Boxes</th>
+            <th class="ps-num-hd gd-col-pend-sub">Total Inv. Qty</th>
+            <th class="ps-num-hd gd-col-tat-sub">Beyond Capacity</th>
+            <th class="ps-num-hd gd-col-tat-sub">Above TAT</th>
+            <th class="ps-num-hd gd-col-tat-sub">Within TAT</th>
+            <th class="ps-num-hd gd-col-tat-sub">Above TAT (%)</th>
+            <th class="ps-num-hd gd-col-tat-sub">Within TAT (%)</th>
           </tr>
         </thead>
         <tbody id="gdBody"><tr><td colspan="22" class="empty-cell">Upload inward register to see GRN dashboard</td></tr></tbody>
@@ -1457,6 +1775,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
                 <option value="">— Select PO No. first —</option>
               </select>
             </div>
+            <div id="invMultiBadge" style="display:none;margin-top:5px;align-items:center;gap:5px;padding:6px 11px;border-radius:7px;background:#fff1f2;border:1.5px solid rgba(220,38,38,.4);color:var(--red);font-size:10px;font-weight:700;line-height:1.5">⛔ Multiple invoices found — select the correct one to proceed</div>
             <div id="invInfoStrip" style="display:none;margin-top:6px;background:linear-gradient(135deg,#eff6ff,#f0fdff);border:1.5px solid rgba(37,99,235,.2);border-radius:8px;padding:8px 12px">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <div>
@@ -1527,7 +1846,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
         <div class="stat-card"><div class="sc-num c-t" id="st-uniq">0</div><div class="sc-lbl">Unique SKUs</div></div>
       </div>
       <!-- PO-wise summary strip — shown when session active -->
-      <div id="poSummaryStrip" style="display:none;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;display:none">
+      <div id="poSummaryStrip" style="display:none;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink3)">PO Summary</span>
@@ -1610,11 +1929,9 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
             <button class="btn btn-ghost btn-sm" onclick="clearBulkInput()">✕ Clear</button>
           </div>
           <div style="font-size:9px;color:var(--ink3);margin-top:5px;text-align:center">Scan one EAN → set Units qty → optionally add Remark → Process</div>
-          <!-- Hidden textarea for compatibility -->
-          <textarea id="bulkInput" style="display:none" disabled></textarea>
         </div>
         <!-- Two distinct action buttons — shown when session is active -->
-        <div id="scanBoxEndSession" style="display:none;margin-top:10px;display:none">
+        <div id="scanBoxEndSession" style="display:none;margin-top:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <button class="btn btn-warn" style="justify-content:center;font-size:11px;font-weight:700;padding:9px;letter-spacing:.3px" onclick="openCartonReview()">📦 End Carton</button>
             <button class="btn btn-danger" style="justify-content:center;font-size:11px;font-weight:700;padding:9px;letter-spacing:.3px" onclick="endSession()">⏹ End Session</button>
@@ -1699,9 +2016,9 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
         </div>
         <div class="filter-row">
           <span style="font-size:10px;color:var(--ink3)">Filter:</span>
-          <input class="field-input" id="filterScanPO" placeholder="PO No." oninput="renderScannedTable()" style="width:120px">
-          <input class="field-input" id="filterScanCarton" placeholder="Carton" oninput="renderScannedTable()" style="width:100px">
-          <input class="field-input" id="filterScanSKU" placeholder="SKU Code" oninput="renderScannedTable()" style="width:100px">
+          <input class="field-input" id="filterScanPO" placeholder="PO No." oninput="debouncedSync('scanPOF',renderScannedTable,200)" style="width:120px">
+          <input class="field-input" id="filterScanCarton" placeholder="Carton" oninput="debouncedSync('scanCartonF',renderScannedTable,200)" style="width:100px">
+          <input class="field-input" id="filterScanSKU" placeholder="SKU Code" oninput="debouncedSync('scanSKUF',renderScannedTable,200)" style="width:100px">
           <select class="field-select" id="filterScanStatus" onchange="renderScannedTable()" style="width:100px">
             <option value="">All Status</option>
             <option value="Matched">Matched</option>
@@ -1755,9 +2072,9 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
     <div class="dt-tab" onclick="shiftFilter('Day',this)">☀️ Day</div>
     <div class="dt-tab" onclick="shiftFilter('Night',this)">🌙 Night</div>
     <div style="margin-left:12px;display:flex;align-items:center;gap:6px">
-      <input id="recPOFilter" class="field-input" placeholder="Filter PO…" oninput="renderRecordsPage()" list="rec-po-datalist" style="width:130px;padding:5px 10px;font-size:11px">
+      <input id="recPOFilter" class="field-input" placeholder="Filter PO…" oninput="debouncedSync('recPOF',renderRecordsPage,250)" list="rec-po-datalist" style="width:130px;padding:5px 10px;font-size:11px">
       <datalist id="rec-po-datalist"></datalist>
-      <input id="recCartonFilter" class="field-input" placeholder="Filter Carton…" oninput="renderRecordsPage()" style="width:130px;padding:5px 10px;font-size:11px">
+      <input id="recCartonFilter" class="field-input" placeholder="Filter Carton…" oninput="debouncedSync('recCartonF',renderRecordsPage,250)" style="width:130px;padding:5px 10px;font-size:11px">
       <select id="recTableFilter" class="field-select" onchange="renderRecordsPage()" style="width:100px;padding:5px 10px;font-size:11px">
         <option value="">All Tables</option>
       </select>
@@ -2639,32 +2956,6 @@ function initPOUI(){
   }
 }
 
-function refreshStorageStats(){
-  // Count records
-  document.getElementById('ls-scans').textContent=scannedAll.length;
-  document.getElementById('ls-po').textContent=poData.length;
-  document.getElementById('ls-mrp').textContent=Object.keys(mrpMaster).length;
-  // Calculate total storage used by this app's keys
-  let totalBytes=0;
-  const prefix='grnwms8_';
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(k&&k.startsWith(prefix)){
-      totalBytes+=(localStorage.getItem(k)||'').length*2; // UTF-16 = 2 bytes per char
-    }
-  }
-  const kb=Math.round(totalBytes/1024);
-  const maxKB=5*1024; // 5MB typical limit
-  const pct=Math.min(100,Math.round(kb/maxKB*100));
-  document.getElementById('ls-size').textContent=kb>=1024?(kb/1024).toFixed(1)+' MB':kb+' KB';
-  document.getElementById('ls-pct').textContent=pct+'%';
-  const bar=document.getElementById('ls-bar');
-  if(bar){
-    bar.style.width=pct+'%';
-    bar.style.background=pct>80?'linear-gradient(90deg,var(--orange),var(--red))':pct>60?'linear-gradient(90deg,var(--yellow),var(--orange))':'linear-gradient(90deg,var(--accent),var(--teal))';
-  }
-}
-
 function exportLocalBackup(){
   const backup={
     version:'grnwms9',
@@ -2695,7 +2986,6 @@ function importLocalBackup(input){
       if(Array.isArray(backup.inwardData))inwardData=backup.inwardData;
       if(backup.adminCredentials&&backup.adminCredentials.username)adminCredentials=backup.adminCredentials;
       saveAll();
-      refreshStorageStats();
       updateHeaderStats();
       toast('Backup restored — '+scannedAll.length+' scans, '+poData.length+' PO lines','ok');
     }catch(err){toast('Failed to parse backup file','err');}
@@ -2839,33 +3129,54 @@ function onLoginSuccess(){
   document.getElementById('mainHeader').style.display='flex';
   document.getElementById('userDisplay').textContent=currentUser.type==='admin'?'Admin: '+currentUser.username:'Table '+String(currentUser.table).padStart(2,'0');
   buildNavigation();
+
+  // ── Always-on Google Sheet auto-sync ──
+  // Enable auto-sync permanently on every login — no manual toggle needed.
+  LS.save('gsheet_auto_sync','on');
+  gsheetAutoSyncOn=true;
+  const autoBtn=document.getElementById('gsheet-auto-btn');
+  if(autoBtn){autoBtn.textContent='🔄 Auto-sync: ON';autoBtn.style.background='#dcfce7';autoBtn.style.color='#166534';autoBtn.style.borderColor='#86efac';}
+
   if(currentUser.type==='admin'){
     goPage('upload');
-    // Admin: pull all data then start live SSE stream
     if(fbConfig){
       fbConnected=true;isOnline=navigator.onLine;
       const badge=document.getElementById('fb-connected-badge');if(badge)badge.style.display='flex';
       const fsBtn=document.getElementById('forceSyncBtn');if(fsBtn)fsBtn.disabled=false;
       setBanner('syncing','⟳ Connecting to Firebase…');
-      pullFromFirebase(true).then(()=>{startSSE();startInwardMetaPoll();});
+      // Pull Firebase data, start SSE, then fetch Google Sheet
+      pullFromFirebase(true).then(()=>{
+        startSSE();
+        startInwardMetaPoll();
+        setBanner('connected','✅ Firebase live · '+scannedAll.length+' records');
+        _autoFetchGSheet(); // fetch GSheet after Firebase data is fresh
+      });
     }else{
       setBanner('setup','💾 Local storage active · Go to 🔥 Storage tab to connect Firebase');
+      // Still fetch GSheet even without Firebase
+      setTimeout(_autoFetchGSheet,500);
     }
   }else{
     goPage('scan');
     document.getElementById('myTableDisplay').textContent='Table '+String(currentUser.table).padStart(2,'0');
     document.getElementById('scanPageSub').textContent='Scanning for Table '+String(currentUser.table).padStart(2,'0');
-    // Table device: flush any queued offline writes immediately
     if(fbConfig){
       fbConnected=true;isOnline=navigator.onLine;
-      setBanner('connected','✅ Firebase live · Table '+String(currentUser.table).padStart(2,'0'));
+      setBanner('syncing','⟳ Firebase connecting · Table '+String(currentUser.table).padStart(2,'0')+'…');
       startInwardMetaPoll(); // react to admin inward uploads/clears in real time
       if(writeQueue.length>0)flushQueue();
+      // Pull latest inward data from Firebase so PO/Invoice dropdowns are fresh
+      pullFromFirebase(false).then(()=>{
+        setBanner('connected','✅ Firebase live · Table '+String(currentUser.table).padStart(2,'0'));
+        refreshPODropdown();
+        _autoFetchGSheet(); // fetch GSheet after Firebase sync
+      });
     }else{
       setBanner('setup','⚠ Firebase not set up — tap below to connect');
-      // Show the quick-setup card for table users on mobile
       const mqs=document.getElementById('mobFbQuickSetup');
       if(mqs)mqs.style.display='block';
+      // Still fetch GSheet even without Firebase
+      setTimeout(_autoFetchGSheet,500);
     }
   }
   refreshPODropdown();updateHeaderStats();
@@ -3305,9 +3616,59 @@ let gsheetAutoSyncOn=false;
 function onGSheetUrlInput(){
   const url=(document.getElementById('gsheet-inward-url').value||'').trim();
   document.getElementById('gsheet-fetch-btn').disabled=!url;
-  // Save URL persistently so it survives page reload
-  if(url)LS.save('gsheet_inward_url',url);
-  else LS.remove('gsheet_inward_url');
+  if(url){
+    LS.save('gsheet_inward_url',url);
+    // Reset hash so the next poll triggers a fresh full fetch
+    _gsLastHash='';
+    // Start live sync if not already running
+    _startGSheetLiveSync();
+  }else{
+    LS.remove('gsheet_inward_url');
+  }
+}
+
+function onGSheetSheetInput(){
+  const sh=(document.getElementById('gsheet-inward-sheet').value||'').trim();
+  const hint=document.getElementById('gs-sheet-hint');
+  const hintName=document.getElementById('gs-sheet-hint-name');
+  if(sh&&hint&&hintName){hint.style.display='block';hintName.textContent=sh;}
+  else if(hint){hint.style.display='none';}
+  if(sh)LS.save('gsheet_inward_sheet',sh);
+  else LS.remove('gsheet_inward_sheet');
+}
+
+function saveGsColOverrides(){
+  const cols={
+    po:    (document.getElementById('gs-col-po')||{value:''}).value.trim(),
+    inv:   (document.getElementById('gs-col-inv')||{value:''}).value.trim(),
+    vendor:(document.getElementById('gs-col-vendor')||{value:''}).value.trim(),
+    date:  (document.getElementById('gs-col-date')||{value:''}).value.trim(),
+    qty:   (document.getElementById('gs-col-qty')||{value:''}).value.trim(),
+    cartons:(document.getElementById('gs-col-cartons')||{value:''}).value.trim(),
+  };
+  LS.save('gsheet_col_overrides',cols);
+}
+
+function restoreGsColOverrides(){
+  const cols=LS.load('gsheet_col_overrides',null);
+  if(!cols)return;
+  const map={po:'gs-col-po',inv:'gs-col-inv',vendor:'gs-col-vendor',date:'gs-col-date',qty:'gs-col-qty',cartons:'gs-col-cartons'};
+  Object.entries(map).forEach(([key,id])=>{
+    const el=document.getElementById(id);
+    if(el&&cols[key])el.value=cols[key];
+  });
+}
+
+// Inject any user-supplied overrides into GSHEET_INWARD_COLS before processing
+function applyGsColOverrides(){
+  const cols=LS.load('gsheet_col_overrides',null);
+  if(!cols)return;
+  if(cols.po)    GSHEET_INWARD_COLS.poNo.unshift(cols.po);
+  if(cols.inv)   GSHEET_INWARD_COLS.invNo.unshift(cols.inv);
+  if(cols.vendor)GSHEET_INWARD_COLS.vendorName.unshift(cols.vendor);
+  if(cols.date)  GSHEET_INWARD_COLS.date.unshift(cols.date);
+  if(cols.qty)   GSHEET_INWARD_COLS.totalInvQty.unshift(cols.qty);
+  if(cols.cartons)GSHEET_INWARD_COLS.noOfCartons.unshift(cols.cartons);
 }
 
 function setGSheetStatus(msg,type){
@@ -3331,8 +3692,10 @@ async function fetchGSheetInward(silent){
   const btn=document.getElementById('gsheet-fetch-btn');
   if(!silent&&btn)btn.disabled=true;
   try{
+    const sheetName=(document.getElementById('gsheet-inward-sheet')||{value:''}).value.trim();
     const sep=rawUrl.includes('?')?'&':'?';
-    const resp=await fetch(rawUrl+sep+'_cb='+Date.now(),{cache:'no-cache'});
+    const sheetParam=sheetName?('&sheet='+encodeURIComponent(sheetName)):'';
+    const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const json=await resp.json();
     const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
@@ -3343,6 +3706,9 @@ async function fetchGSheetInward(silent){
     }
     setGSheetStatus('✓ Fetched '+rows.length+' rows — processing…','ok');
     processGSheetInwardRows(rows,silent);
+    // Re-sync hash after manual fetch so the poller has a fresh baseline
+    _gsLastHash='';
+    _gsHashPoll();
     if(!silent&&btn)btn.disabled=false;
   }catch(err){
     setGSheetStatus('✗ '+err.message+' — Check Web App URL and ensure access is set to Anyone','err');
@@ -3378,6 +3744,17 @@ function restoreGSheetPrefs(){
     const inp=document.getElementById('gsheet-inward-url');
     if(inp){inp.value=savedUrl;}
     const btn=document.getElementById('gsheet-fetch-btn');if(btn)btn.disabled=false;
+  }
+  // Restore column overrides
+  restoreGsColOverrides();
+  // Restore saved sheet/tab name
+  const savedSheet=LS.load('gsheet_inward_sheet','');
+  if(savedSheet){
+    const shInp=document.getElementById('gsheet-inward-sheet');
+    if(shInp){shInp.value=savedSheet;}
+    const hint=document.getElementById('gs-sheet-hint');
+    const hintName=document.getElementById('gs-sheet-hint-name');
+    if(hint&&hintName){hint.style.display='block';hintName.textContent=savedSheet;}
   }
   // Restore auto-sync button appearance only (interval is owned by initUI's setInterval)
   if(LS.load('gsheet_auto_sync','')===('on')){
@@ -3426,6 +3803,8 @@ const GSHEET_INWARD_COLS={
 };
 
 function processGSheetInwardRows(rows,silent){
+  // Inject user-supplied column name overrides (prepended so they take priority)
+  applyGsColOverrides();
   // Case-insensitive key lookup — handles any capitalisation from Apps Script
   const get=(r,keys)=>{
     // Try exact match first
@@ -3438,6 +3817,24 @@ function processGSheetInwardRows(rows,silent){
       const kl=k.toLowerCase().replace(/[\s._-]+/g,'');
       const found=rKeys.find(rk=>rk.toLowerCase().replace(/[\s._-]+/g,'')===kl);
       if(found&&r[found]!==undefined&&r[found]!==null&&String(r[found]).trim()!=='')return String(r[found]).trim();
+    }
+    return '';
+  };
+  // Raw lookup for PO No. and Invoice No. — preserves exact value as-is from sheet
+  // (avoids any coercion that could strip leading zeros or alter formatting)
+  const getRaw=(r,keys)=>{
+    for(const k of keys){
+      if(r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=='')return String(r[k]).trim();
+    }
+    const rKeys=Object.keys(r);
+    for(const k of keys){
+      const kl=k.toLowerCase().replace(/[\s._-]+/g,'');
+      const found=rKeys.find(rk=>rk.toLowerCase().replace(/[\s._-]+/g,'')===kl);
+      if(found&&r[found]!==undefined&&r[found]!==null){
+        const raw=r[found];
+        // Return the value exactly as stored in the sheet cell, just trimmed
+        return String(raw).trim();
+      }
     }
     return '';
   };
@@ -3481,9 +3878,9 @@ function processGSheetInwardRows(rows,silent){
     srNo:i+1,
     date:             fmtDate(get(r,GSHEET_INWARD_COLS.date)),
     vendorName:       get(r,GSHEET_INWARD_COLS.vendorName),
-    poNo:             get(r,GSHEET_INWARD_COLS.poNo),
+    poNo:             getRaw(r,GSHEET_INWARD_COLS.poNo),
     newPO:            get(r,GSHEET_INWARD_COLS.newPO),
-    invNo:            get(r,GSHEET_INWARD_COLS.invNo),
+    invNo:            getRaw(r,GSHEET_INWARD_COLS.invNo),
     invDate:          fmtDate(get(r,GSHEET_INWARD_COLS.invDate)),
     totalInvQty:      fmtNum(get(r,GSHEET_INWARD_COLS.totalInvQty)),
     noOfCartons:      fmtNum(get(r,GSHEET_INWARD_COLS.noOfCartons)),
@@ -3496,7 +3893,20 @@ function processGSheetInwardRows(rows,silent){
   })).filter(x=>x.poNo);
 
   if(!data.length){
-    setGSheetStatus('⚠ No valid rows — make sure PO No. column exists in the sheet','err');
+    // Show the actual column names from the sheet so user can map them
+    const actualCols=rows.length>0?Object.keys(rows[0]):[];
+    const colDisplay=actualCols.length?(' Columns found: ['+actualCols.join(', ')+']'):'';
+    setGSheetStatus('⚠ PO No. column not matched.'+colDisplay,'err');
+    // Also show debug panel with mapping hints
+    const dbg=document.getElementById('gsheet-debug');
+    if(dbg){
+      dbg.style.display='block';
+      const expected=GSHEET_INWARD_COLS.poNo.slice(0,5).join(', ');
+      dbg.innerHTML='<b style="color:#f0883e">Columns in your sheet:</b><br>'
+        +actualCols.map(c=>'  '+c).join('<br>')
+        +'<br><br><b style="color:#f0883e">Expected PO column names (any of):</b><br>  '+expected
+        +'<br><br><b style="color:#79c0ff">Fix:</b> Rename your PO column to one of the above, OR use the<br>  <b>Column Override</b> field below to tell the app your exact column name.';
+    }
     const btn=document.getElementById('gsheet-fetch-btn');if(btn)btn.disabled=false;
     return;
   }
@@ -3556,8 +3966,10 @@ async function debugGSheetCols(){
   const dbg=document.getElementById('gsheet-debug');
   if(dbg){dbg.style.display='block';dbg.textContent='Fetching column names...';}
   try{
+    const sheetName2=(document.getElementById('gsheet-inward-sheet')||{value:''}).value.trim();
     const sep=rawUrl.includes('?')?'&':'?';
-    const resp=await fetch(rawUrl+sep+'_cb='+Date.now(),{cache:'no-cache'});
+    const sheetParam2=sheetName2?('&sheet='+encodeURIComponent(sheetName2)):'';
+    const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam2,{cache:'no-cache'});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const json=await resp.json();
     const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:[]);
@@ -3642,22 +4054,51 @@ function refreshInvNoDropdown(filterPO){
     const invNos=[...new Set(inwardData.filter(r=>r.poNo===filterPO).map(r=>r.invNo).filter(Boolean))];
     sel.innerHTML='<option value="">— Select Invoice No. —</option>'+invNos.map(v=>`<option value="${v}">${v}</option>`).join('');
     sel.disabled=false;sel.style.opacity='';sel.style.cursor='';
+    // Show multi-invoice badge — red hard-block when >1 invoice and none selected yet
+    const multiBadge=document.getElementById('invMultiBadge');
+    if(multiBadge){
+      if(invNos.length>1){
+        multiBadge.style.display='inline-flex';
+        multiBadge.textContent='⛔ '+invNos.length+' invoices found — select the correct one to proceed';
+        multiBadge.style.background='#fff1f2';
+        multiBadge.style.borderColor='rgba(220,38,38,.4)';
+        multiBadge.style.color='var(--red)';
+      }else{
+        multiBadge.style.display='none';
+      }
+    }
     // Restore previous selection if it still exists in the new list
     if(prevVal&&invNos.includes(prevVal)){
-      sel.value=prevVal;
+      sel.value=prevVal;onInvNoChange();
     }else if(invNos.length===1){
       sel.value=invNos[0];onInvNoChange();
     }
+    // Reflect blocked state on Start Session button if multi-invoice and nothing selected
+    _updateStartBtnInvState(invNos,sel.value);
   }else{
     sel.innerHTML='<option value="">— Select PO No. first —</option>';
     sel.disabled=true;sel.style.opacity='.5';sel.style.cursor='not-allowed';
     const strip=document.getElementById('invInfoStrip');if(strip)strip.style.display='none';
   }
 }
+function _updateStartBtnInvState(invNos,currentVal){
+  // If multiple invoices exist and none is chosen, visually signal the Start Session button is blocked
+  const btn=document.getElementById('startSessionBtn');
+  if(!btn||session)return;
+  const blocked=invNos&&invNos.length>1&&!currentVal;
+  btn.style.opacity=blocked?'.45':'';
+  btn.title=blocked?'Select an Invoice No. first — this PO has '+invNos.length+' invoices':'';
+}
 function onInvNoChange(){
   const sel=document.getElementById('selInvNo');if(!sel)return;
   const invNo=sel.value;
   const strip=document.getElementById('invInfoStrip');
+  const multiBadge=document.getElementById('invMultiBadge');
+  // Dismiss the red hard-block badge once operator selects an invoice
+  if(invNo&&multiBadge)multiBadge.style.display='none';
+  // Restore Start Session button opacity — selection clears the block
+  const _btn=document.getElementById('startSessionBtn');
+  if(_btn&&!session)_btn.style.opacity='';
   if(!invNo){if(strip)strip.style.display='none';return;}
   const inv=inwardData.find(r=>r.invNo===invNo);
   if(inv){
@@ -3706,7 +4147,7 @@ function onPOChange(){
   if(session)return;
   const po=(document.getElementById('selPO').value||'').trim();
   const hint=document.getElementById('po-sel-hint');
-  if(!po){hint.textContent='';resetSizeBreakdownGrid();refreshInvNoDropdown(null);return;}
+  if(!po){hint.textContent='';resetSizeBreakdownGrid();refreshInvNoDropdown(null);const mb=document.getElementById('invMultiBadge');if(mb)mb.style.display='none';return;}
   const rows=poData.filter(r=>r.poNo===po);
   if(rows.length){hint.textContent='✓ '+rows.length+' lines';hint.style.color='var(--green)';buildSizeBreakdownGrid(po);}
   else{hint.textContent='⚠ PO not found';hint.style.color='var(--yellow)';resetSizeBreakdownGrid();}
@@ -3869,8 +4310,14 @@ function startSession(){
   const invNo=(document.getElementById('selInvNo').value||'').trim();
   const carton=document.getElementById('inCarton').value.trim();
   const units=parseInt(document.getElementById('inCUnits').value)||0;
+  // Determine how many invoices exist for this PO in the inward register
+  const poInvNos=[...new Set(inwardData.filter(r=>r.poNo===po).map(r=>r.invNo).filter(Boolean))];
+  const multiInvoicePO=poInvNos.length>1;
   const errs=[];
-  if(!po)errs.push('Select PO.');if(!invNo)errs.push('Select Invoice No.');if(!carton)errs.push('Enter Carton No.');if(!units||units<1)errs.push('Enter units in the size breakdown grid.');
+  if(!po)errs.push('Select PO.');
+  // Invoice No. is mandatory only when the selected PO has more than one invoice
+  if(multiInvoicePO&&!invNo)errs.push('This PO has '+poInvNos.length+' invoices — select the correct Invoice No. before starting.');
+  if(!carton)errs.push('Enter Carton No.');if(!units||units<1)errs.push('Enter units in the size breakdown grid.');
   const strip=document.getElementById('val-strip');
   if(errs.length){strip.textContent=errs.join(' ');strip.classList.add('show');return;}
   strip.classList.remove('show');
@@ -4294,12 +4741,7 @@ function setScanMode(mode){
     document.getElementById('bcInput').focus();
   }
   if(mode==='bulk'&&session){
-    // Initialise rows if container is empty
-    const container=document.getElementById('bulkRows');
-    if(container&&container.children.length===0)initBulkRows();
-    // Focus first empty EAN field
-    const firstEmpty=container&&[...container.querySelectorAll('.bulk-col-ean')].find(i=>!i.value);
-    if(firstEmpty)setTimeout(()=>firstEmpty.focus(),50);
+    setTimeout(()=>{const f=document.getElementById('bulkEanInput');if(f)f.focus();},50);
   }
 }
 
@@ -4379,11 +4821,6 @@ function disableBulkPanel(){
   });
 }
 
-function initBulkRows(){clearBulkInput();}  // compat shim — single panel needs no row init
-function addBulkRow(){                       // compat shim
-  const eanEl=document.getElementById('bulkEanInput');
-  if(eanEl)eanEl.focus();
-}
 
 function doBulkScan(){
   if(!session){toast('Start a session first','err');return;}
@@ -5402,7 +5839,6 @@ function clearRecFilters(){
   document.getElementById('recStatusFilter').value='';
   const cf=document.getElementById('recCartonFilter');if(cf)cf.value='';
   recCurrentPage=0;renderRecordsPage();
-  document.getElementById('recStatusFilter').value='';recCurrentPage=0;renderRecordsPage();
 }
 function renderRecordsPage(){
   if(!currentUser)return;
@@ -5927,22 +6363,16 @@ function exportSelectedPO(){
     }
   });
 
-  // Build PO → [Invoice entries] map from inward register (supports multiple invoices per PO)
-  // poInvList: invNo → {invNo, invDate, invQty, ...}
+  // Resolve the Invoice No. to stamp in the export:
+  // — If operator selected a specific invoice → use that strictly
+  // — If only one invoice exists for this PO → use it
+  // — If multiple invoices but none selected → use the invNo already on the scan record
   const poInvList=inwardData.filter(r=>r.poNo===po&&r.invNo);
-  // Build a lookup: invNo → invNo string (deduplicated)
   const invNoSet=new Map();
   poInvList.forEach(r=>{ if(!invNoSet.has(r.invNo)) invNoSet.set(r.invNo,r); });
-  // If user selected a specific invoice, resolve its invNo; otherwise collect all
-  // For each scan row we need to know which invNo to stamp. Since scans don't carry invNo
-  // directly, we assign: if one invoice → that; if filtered → selected; if multiple → joined list
   const allInvNos=[...invNoSet.keys()];
-  const resolveInvNo=()=>{
-    if(selectedInv) return selectedInv;
-    if(allInvNos.length===1) return allInvNos[0];
-    return allInvNos.join(' / ');
-  };
-  const stampedInvNo=resolveInvNo();
+  // stampedInvNo: used when scan record has no invNo (legacy records)
+  const stampedInvNo=selectedInv?selectedInv:(allInvNos.length===1?allInvNos[0]:'');
 
   const aggMap={};
   poRecs.forEach(r=>{
@@ -5955,7 +6385,7 @@ function exportSelectedPO(){
     if(!aggMap[key]){
       const mrpV=mrpMaster[mrpKey(r.skuDesc)];
       aggMap[key]={
-        date:r.date,poNo:r.poNo,invNo:stampedInvNo,tbl:r.tbl,carton:r.carton,
+        date:r.date,poNo:r.poNo,invNo:r.invNo||stampedInvNo,tbl:r.tbl,carton:r.carton,
         cartonStartTime:r.cartonStartTime||'',
         ean:r.ean,skuCode:r.skuCode,skuDesc:r.skuDesc,size:sz,
         count:0,remarkCounts:{},
@@ -6149,6 +6579,20 @@ function psSortBy(col){
 }
 function renderPOStatus(){
   const GRN_REMARKS=['GRN Done','Excess Qty _ tolerance percentage','Over-Receipt of SKU Units vs Invoice','Barcode Issue','PO Not Released','GRN Hold by TSS Team','SKU does not belong to PO'];
+  // Pre-index scans by "poNo||invNo" key — each inward row (PO+Invoice pair) gets its own scans
+  const scansByPOInv={};  // key: poNo+'||'+invNo
+  const scansByPO={};     // key: poNo (fallback for rows with no invNo on scan record)
+  scannedAll.forEach(r=>{
+    if(r.poNo){
+      if(!scansByPO[r.poNo])scansByPO[r.poNo]=[];
+      scansByPO[r.poNo].push(r);
+      if(r.invNo){
+        const k=r.poNo+'||'+r.invNo;
+        if(!scansByPOInv[k])scansByPOInv[k]=[];
+        scansByPOInv[k].push(r);
+      }
+    }
+  });
   const allPOs=[...new Set([...inwardData.map(r=>r.poNo),...scannedAll.map(r=>r.poNo)])].filter(Boolean).sort();
   const dl=document.getElementById('ps-po-datalist');if(dl)dl.innerHTML=allPOs.map(p=>`<option value="${p}">`).join('');
   const fDate=(document.getElementById('psDateFilter').value||'').trim().toLowerCase();
@@ -6157,7 +6601,26 @@ function renderPOStatus(){
   let rows=[];
   if(inwardData.length){
     rows=inwardData.map((inv,idx)=>{
-      const poScans=scannedAll.filter(r=>r.poNo===inv.poNo);
+      // Match scans strictly by PO+Invoice key when invNo is present.
+      // For a multi-invoice PO, scans recorded against Invoice A must NOT
+      // appear on Invoice B's row — so no fallback to the whole-PO bucket.
+      const piKey=inv.poNo+'||'+inv.invNo;
+      const hasPIKey=inv.invNo&&inv.invNo!=='—'&&scansByPOInv[piKey]&&scansByPOInv[piKey].length>0;
+      const poHasMultipleInvoices=(()=>{
+        const invNosForPO=[...new Set(inwardData.filter(r=>r.poNo===inv.poNo).map(r=>r.invNo).filter(Boolean))];
+        return invNosForPO.length>1;
+      })();
+      // Only fall back to PO-level scans when this PO has a single invoice
+      // (or no invNo at all) — never when multiple invoices exist for the same PO.
+      let poScans;
+      if(hasPIKey){
+        poScans=scansByPOInv[piKey];
+      }else if(!poHasMultipleInvoices){
+        poScans=scansByPO[inv.poNo]||[];
+      }else{
+        // Multi-invoice PO but no scans recorded under this specific invoice yet
+        poScans=scansByPOInv[piKey]||[];
+      }
       const totalScanned=poScans.length;
       const scanTables=[...new Set(poScans.map(r=>r.tbl))].sort((a,b)=>a-b);
       const scanCartons=[...new Set(poScans.map(r=>r.tbl+'__'+r.carton).filter(r=>r.includes('__')&&r.split('__')[1]))].length;
@@ -6183,9 +6646,9 @@ function renderPOStatus(){
         const dates=poScans.map(r=>r.date).filter(Boolean).sort();
         if(dates.length)scanningDate=dates[dates.length-1];
       }
-      // Requirement 3: Issue column — "Without Issue" if Remarks contains "GRN Done", else "With Issue"
+      // Issue column — "Without Issue" if Remarks is empty or contains "GRN Done", else "With Issue"
       const remark=inv.grnRemark||'';
-      const issue=remark.toLowerCase().includes('grn done')?'Without Issue':'With Issue';
+      const issue=(!remark.trim()||remark.toLowerCase().includes('grn done'))?'Without Issue':'With Issue';
       return{id:inv.id,srNo:inv.srNo||idx+1,date:inv.date,vendorName:inv.vendorName||'—',poNo:inv.poNo,newPO:inv.newPO||'—',invNo:inv.invNo||'—',invDate:inv.invDate||'—',totalInvQty:inv.totalInvQty,noOfCartons:inv.noOfCartons,totalScanned,scanCartons,scanTables,tableBreakdown,scanningStatus,scanningDate,grnStatus:inv.grnStatus||'Pending',grnRemark:inv.grnRemark||'',issue,issueResolvedDate:inv.issueResolvedDate||'',grnDate:inv.grnDate||'',grnQty:inv.grnQty||'',tat:inv.tat||'',_inv:inv};
     });
   }else{
@@ -6307,8 +6770,6 @@ function renderPOStatus(){
   document.getElementById('ps-count').textContent=filtered.length+' entries';
   document.getElementById('ps-tbl-count').textContent=filtered.length+' POs';
   const isAdmin=currentUser&&currentUser.type==='admin';
-  const actTh=document.getElementById('ps-actions-th');
-  if(actTh)actTh.style.display='none';
   const body=document.getElementById('psBody');
   if(!filtered.length){body.innerHTML='<tr><td colspan="21" class="empty-cell">'+(inwardData.length?'No POs match the filters':'Upload the inward register to see PO status')+'</td></tr>';return;}
   // Group filtered rows by poNo so that inward fields (date, vendor, PO…) and
@@ -6325,13 +6786,11 @@ function renderPOStatus(){
     const r0=grp.rows[0];
     const invRows=grp.rows;
 
-    // Table breakdown sorted by table number — shared across all invoices of this PO
-    const tbEntries=Object.entries(r0.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
-    const tbList=tbEntries.length?tbEntries:[['—',{units:0,cartons:new Set()}]];
-    const tbCount=tbList.length;
+    // For multi-invoice POs each invoice has its own table breakdown.
+    // tbCount here is the max table count across all invoices (for rowspan calc).
+    const allTbEntries=invRows.map(inv=>Object.entries(inv.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0])));
+    const tbCount=Math.max(...allTbEntries.map(e=>e.length),1);
     const invCount=invRows.length;
-    // Total physical rows = one per table × one per invoice
-    const totalRows=tbCount*invCount;
 
     // Helper: build per-invoice right-side cells — each invoice has its OWN status/TAT/GRN
     const buildInvRight=(inv,rsInv)=>{
@@ -6380,13 +6839,13 @@ function renderPOStatus(){
         +`<td${rsInv}>${grnRemarkCell}</td>`;
     };
 
-    // Each invoice row repeats the PO details (requirement: separate row per unique Invoice No.)
-    const makeSharedLeft=(rowNum)=>
+    // Each invoice row shows its OWN vehicle arrived date and vendor — not always r0.
+    const makeSharedLeft=(rowNum,inv)=>
       `<td class="ps-fr ps-fr-num ps-row-num">${rowNum}</td>`
-      +`<td class="ps-fr ps-fr-date td-ts">${r0.date||'\u2014'}</td>`
-      +`<td class="ps-fr ps-fr-vendor" style="font-size:11px;overflow:hidden;text-overflow:ellipsis">${r0.vendorName||'\u2014'}</td>`
-      +`<td class="ps-fr ps-fr-po"><span class="po-badge">${r0.poNo}</span></td>`
-      +`<td style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">${r0.newPO||'\u2014'}</td>`;
+      +`<td class="ps-fr ps-fr-date td-ts">${inv.date||'\u2014'}</td>`
+      +`<td class="ps-fr ps-fr-vendor" style="font-size:11px;overflow:hidden;text-overflow:ellipsis">${inv.vendorName||'\u2014'}</td>`
+      +`<td class="ps-fr ps-fr-po"><span class="po-badge">${inv.poNo}</span></td>`
+      +`<td style="font-family:var(--font-mono);font-size:10px;color:var(--ink3)">${inv.newPO||'\u2014'}</td>`;
 
     const html=[];
     // Flatten: one row per invoice (repeat PO details on each row)
@@ -6399,7 +6858,8 @@ function renderPOStatus(){
         +`<td class="td-num" style="color:var(--accent);font-weight:700">${inv.totalInvQty!==undefined&&inv.totalInvQty!=='\u2014'?inv.totalInvQty:'\u2014'}</td>`
         +`<td class="td-num">${inv.noOfCartons!==undefined&&inv.noOfCartons!=='\u2014'?inv.noOfCartons:'\u2014'}</td>`;
       // Table breakdown — show first table on this row; additional tables as sub-rows within invoice
-      const tbEntries2=Object.entries(r0.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+      // Table breakdown for THIS invoice (not shared r0 — each invoice has its own scans)
+      const tbEntries2=Object.entries(inv.tableBreakdown||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
       const tbList2=tbEntries2.length?tbEntries2:[['\u2014',{units:0,cartons:new Set()}]];
       const t0=tbList2[0];
       const tBadge0=t0[0]==='\u2014'?'<span class="rmk-none">\u2014</span>'
@@ -6408,7 +6868,7 @@ function renderPOStatus(){
         +`<td class="td-num" style="color:var(--green);font-weight:700">${t0[0]==='\u2014'?'\u2014':t0[1].units}</td>`
         +`<td class="td-num" style="color:var(--teal);font-weight:700">${t0[0]==='\u2014'?'\u2014':t0[1].cartons.size}</td>`;
       const rowBg=ii%2===0?'':'background:#fafbff';
-      html.push(`<tr style="${sepStyle};${rowBg}"${isLast?' class="ps-group-end"':''}>${makeSharedLeft(gi*100+ii+1)}${invCols}${tCells0}${invRight}</tr>`);
+      html.push(`<tr style="${sepStyle};${rowBg}"${isLast?' class="ps-group-end"':''}>${makeSharedLeft(gi*100+ii+1,inv)}${invCols}${tCells0}${invRight}</tr>`);
       // Additional tables as extra rows (no PO repeat, just table info)
       tbList2.slice(1).forEach(([t,v],ti)=>{
         const tBadge=`<span class="tbl-badge" style="font-size:10px;padding:3px 8px">T${String(t).padStart(2,'0')}</span>`;
@@ -6487,7 +6947,7 @@ function exportPOStatus(){
     const scanningDate=dates.length?dates[dates.length-1]:'';
     const tbBreakdown={};poScans.forEach(r=>{const t=r.tbl;if(!tbBreakdown[t])tbBreakdown[t]={units:0,cartons:new Set()};tbBreakdown[t].units++;if(r.carton)tbBreakdown[t].cartons.add(r.carton);});
     const tbEntries=Object.entries(tbBreakdown).sort((a,b)=>Number(a[0])-Number(b[0]));
-    const issue=(grnRemark||'').toLowerCase().includes('grn done')?'Without Issue':'With Issue';
+    const issue=(!(grnRemark||'').trim()||(grnRemark||'').toLowerCase().includes('grn done'))?'Without Issue':'With Issue';
     srNo++;
     if(!tbEntries.length){
       rows.push([srNo,date,q(vendorName),poNo,newPO,invNo,invDate,totalInvQty!==undefined&&totalInvQty!==''?totalInvQty:'',noOfCartons!==undefined&&noOfCartons!==''?noOfCartons:'','—','—','—',scanningStatus,scanningDate,issue,issueResolvedDate||'',grnDate||'',grnQty||'',grnStatus,tat||'',q(grnRemark)]);
@@ -6500,7 +6960,11 @@ function exportPOStatus(){
   };
   if(inwardData.length){
     inwardData.forEach(inv=>{
-      const poScans=scannedAll.filter(r=>r.poNo===inv.poNo);
+      // Match scans by PO+Invoice key — each inward row sees only its own invoice's scans
+      const piKey=inv.poNo+'||'+inv.invNo;
+      const poScans=inv.invNo
+        ?scannedAll.filter(r=>r.poNo===inv.poNo&&r.invNo===inv.invNo)
+        :scannedAll.filter(r=>r.poNo===inv.poNo);
       addRows(inv,poScans,inv.totalInvQty,inv.noOfCartons,inv.invNo||'',inv.invDate||'',inv.newPO||'',inv.date,inv.vendorName||'',inv.poNo,inv.grnStatus||'Pending',inv.grnRemark||'',inv.issueResolvedDate||'',inv.grnDate||'',inv.grnQty||'',inv.tat||'');
     });
   }else{
@@ -6627,21 +7091,25 @@ function renderGRNDash(){
     const pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
     const pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
 
-    // Daily capacity cap = 30,000 units
-    // Walk all invoices in order; qty within cap goes to TAT pool, qty over cap → beyondCapacity
+    // ── Beyond Capacity ──
+    // Sum all invoice qty for this date. Any qty beyond 30,000 goes into Beyond Capacity.
+    // Walk invoices in arrival order; each invoice contributes up to its full qty within the cap,
+    // then the remainder (or entire qty if cap already exhausted) is Beyond Capacity.
     const DAILY_CAP=30000;
     let capRemaining=DAILY_CAP;
     let beyondCapQty=0;
-    // Build a map: invId → qty that falls within capacity (for TAT calc)
+    // withinCapQty[inv.id] = the portion of that invoice's qty that falls within the 30k cap
     const withinCapQty={};
     invList.forEach(inv=>{
       const qty=parseInt(inv.totalInvQty)||0;
       if(capRemaining<=0){
+        // Cap already exhausted — entire invoice qty is beyond capacity
         beyondCapQty+=qty;
       }else if(qty<=capRemaining){
         withinCapQty[inv.id]=qty;
         capRemaining-=qty;
       }else{
+        // Partially within cap
         withinCapQty[inv.id]=capRemaining;
         beyondCapQty+=qty-capRemaining;
         capRemaining=0;
@@ -6649,10 +7117,27 @@ function renderGRNDash(){
     });
     const beyond=beyondCapQty;
 
-    // TAT — only for done invoices that have GRN Date, using within-capacity qty only
-    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(withinCapQty[i.id]||0)>0);
-    const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(withinCapQty[i.id]||0),0);
-    const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(withinCapQty[i.id]||0),0);
+    // ── Within TAT / Above TAT ──
+    // TAT uses the full totalInvQty of each invoice.
+    // Rule: TAT columns together cannot exceed the daily capacity (30,000).
+    // If uQty >= 30,000 and Within TAT qty >= 30,000 → Above TAT must be 0,
+    // because the entire capacity is already accounted for by Within TAT invoices.
+    const tatList=invList.filter(i=>_gdParseDate(i.grnDate)&&_gdParseDate(i.issueResolvedDate));
+    let rawAbove=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    let rawWithin=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    // Apply capacity cap: if total invoice qty >= DAILY_CAP and within already fills the cap → above = 0
+    let above=rawAbove,within=rawWithin;
+    if(uQty>=DAILY_CAP){
+      if(rawWithin>=DAILY_CAP){
+        // Within TAT fills or exceeds capacity — no room left for Above TAT
+        within=DAILY_CAP;
+        above=0;
+      }else{
+        // Within TAT is under cap — Above TAT can only fill the remaining capacity
+        within=rawWithin;
+        above=Math.min(rawAbove,DAILY_CAP-rawWithin);
+      }
+    }
     const tatTotal=above+within;
     const abovePct=tatTotal>0?((above/tatTotal)*100).toFixed(2)+'%':'0.00%';
     const withinPct=tatTotal>0?((within/tatTotal)*100).toFixed(2)+'%':'0.00%';
@@ -6672,26 +7157,26 @@ function renderGRNDash(){
     return`<tr>
       <td class="ps-fr ps-fr-num ps-row-num">${idx+1}</td>
       <td class="ps-fr ps-fr-date td-ts" style="font-weight:700;color:var(--ink)">${date}</td>
-      <td class="ps-num-cell" style="color:var(--accent)">${n(uInv)}</td>
-      <td class="ps-num-cell" style="color:var(--accent)">${n(uBoxes)}</td>
-      <td class="ps-num-cell" style="color:var(--accent)">${n(uQty)}</td>
-      <td class="ps-num-cell" style="color:var(--green);font-weight:700">${n(dInv)}</td>
-      <td class="ps-num-cell" style="color:var(--green)">${n(dBoxes)}</td>
-      <td class="ps-num-cell" style="color:var(--green)">${n(dQty)}</td>
-      <td class="ps-num-cell" style="color:var(--yellow)">${n(upInv)}</td>
-      <td class="ps-num-cell" style="color:var(--yellow)">${n(upBoxes)}</td>
-      <td class="ps-num-cell" style="color:var(--yellow)">${n(upQty)}</td>
-      <td class="ps-num-cell" style="color:var(--red)">${n(iInv)}</td>
-      <td class="ps-num-cell" style="color:var(--red)">${n(iBoxes)}</td>
-      <td class="ps-num-cell" style="color:var(--red)">${n(iQty)}</td>
-      <td class="ps-num-cell" style="color:var(--orange)">${n(pInv)}</td>
-      <td class="ps-num-cell" style="color:var(--orange)">${n(pBoxes)}</td>
-      <td class="ps-num-cell" style="color:var(--orange)">${n(pQty)}</td>
-      <td class="ps-num-cell" style="color:var(--purple)">${beyond>0?`<span style="font-weight:800;color:var(--purple)">${beyond.toLocaleString()}</span>`:'<span style="color:var(--ink3)">-</span>'}</td>
-      <td class="ps-num-cell" style="color:var(--red);font-weight:700">${n(above)}</td>
-      <td class="ps-num-cell" style="color:var(--green);font-weight:700">${n(within)}</td>
-      <td class="ps-num-cell">${pctBadge(abovePct,'var(--red)')}</td>
-      <td class="ps-num-cell">${pctBadge(withinPct,'var(--green)')}</td>
+      <td class="ps-num-cell gd-col-unload-cell">${n(uInv)}</td>
+      <td class="ps-num-cell gd-col-unload-cell">${n(uBoxes)}</td>
+      <td class="ps-num-cell gd-col-unload-cell">${n(uQty)}</td>
+      <td class="ps-num-cell gd-col-grn-cell">${n(dInv)}</td>
+      <td class="ps-num-cell gd-col-grn-cell">${n(dBoxes)}</td>
+      <td class="ps-num-cell gd-col-grn-cell">${n(dQty)}</td>
+      <td class="ps-num-cell gd-col-under-cell">${n(upInv)}</td>
+      <td class="ps-num-cell gd-col-under-cell">${n(upBoxes)}</td>
+      <td class="ps-num-cell gd-col-under-cell">${n(upQty)}</td>
+      <td class="ps-num-cell gd-col-issue-cell">${n(iInv)}</td>
+      <td class="ps-num-cell gd-col-issue-cell">${n(iBoxes)}</td>
+      <td class="ps-num-cell gd-col-issue-cell">${n(iQty)}</td>
+      <td class="ps-num-cell gd-col-pend-cell">${n(pInv)}</td>
+      <td class="ps-num-cell gd-col-pend-cell">${n(pBoxes)}</td>
+      <td class="ps-num-cell gd-col-pend-cell">${n(pQty)}</td>
+      <td class="ps-num-cell gd-col-tat-cell tat-beyond">${beyond>0?`<span style="font-weight:800">${beyond.toLocaleString()}</span>`:'<span style="color:var(--ink3)">-</span>'}</td>
+      <td class="ps-num-cell gd-col-tat-cell tat-above">${n(above)}</td>
+      <td class="ps-num-cell gd-col-tat-cell tat-within">${n(within)}</td>
+      <td class="ps-num-cell gd-col-tat-cell tat-pct-above">${abovePct}</td>
+      <td class="ps-num-cell gd-col-tat-cell tat-pct-within">${withinPct}</td>
     </tr>`;
   });
 
@@ -6700,29 +7185,29 @@ function renderGRNDash(){
   const tAbovePct=tt>0?((kpi.aboveTAT/tt)*100).toFixed(2)+'%':'0.00%';
   const tWithinPct=tt>0?((kpi.withinTAT/tt)*100).toFixed(2)+'%':'0.00%';
   const tn=v=>v===0?'-':v.toLocaleString();
-  rows.push(`<tr style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);font-weight:800;border-top:2px solid #b0bce8">
-    <td class="ps-fr ps-fr-num" style="background:#e8edff!important"></td>
-    <td class="ps-fr ps-fr-date" style="background:#e8edff!important;font-weight:800;color:var(--ink);font-size:11px">TOTAL</td>
-    <td class="ps-num-cell" style="color:var(--accent);font-weight:800">${tn(kpi.unloadInv)}</td>
-    <td class="ps-num-cell" style="color:var(--accent);font-weight:800">${tn(kpi.unloadBoxes)}</td>
-    <td class="ps-num-cell" style="color:var(--accent);font-weight:800">${tn(kpi.unloadQty)}</td>
-    <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tn(kpi.doneInv)}</td>
-    <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tn(kpi.doneBoxes)}</td>
-    <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tn(kpi.doneQty)}</td>
-    <td class="ps-num-cell" style="color:var(--yellow);font-weight:800">${tn(kpi.underInv)}</td>
-    <td class="ps-num-cell" style="color:var(--yellow);font-weight:800">${tn(kpi.underBoxes)}</td>
-    <td class="ps-num-cell" style="color:var(--yellow);font-weight:800">${tn(kpi.underQty)}</td>
-    <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tn(kpi.issueInv)}</td>
-    <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tn(kpi.issueBoxes)}</td>
-    <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tn(kpi.issueQty)}</td>
-    <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendInv)}</td>
-    <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendBoxes)}</td>
-    <td class="ps-num-cell" style="color:var(--orange);font-weight:800">${tn(kpi.pendQty)}</td>
-    <td class="ps-num-cell" style="color:var(--purple);font-weight:800">${kpi.beyondCap>0?tn(kpi.beyondCap):'-'}</td>
-    <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tn(kpi.aboveTAT)}</td>
-    <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tn(kpi.withinTAT)}</td>
-    <td class="ps-num-cell" style="color:var(--red);font-weight:800">${tAbovePct}</td>
-    <td class="ps-num-cell" style="color:var(--green);font-weight:800">${tWithinPct}</td>
+  rows.push(`<tr class="gd-total-row">
+    <td class="ps-fr ps-fr-num" style="text-align:center;font-weight:800;font-size:10px;letter-spacing:.5px">—</td>
+    <td class="ps-fr ps-fr-date" style="font-weight:800;color:#1e3a8a;font-size:11px;letter-spacing:.3px">GRAND TOTAL</td>
+    <td class="ps-num-cell gd-col-unload-cell">${tn(kpi.unloadInv)}</td>
+    <td class="ps-num-cell gd-col-unload-cell">${tn(kpi.unloadBoxes)}</td>
+    <td class="ps-num-cell gd-col-unload-cell">${tn(kpi.unloadQty)}</td>
+    <td class="ps-num-cell gd-col-grn-cell">${tn(kpi.doneInv)}</td>
+    <td class="ps-num-cell gd-col-grn-cell">${tn(kpi.doneBoxes)}</td>
+    <td class="ps-num-cell gd-col-grn-cell">${tn(kpi.doneQty)}</td>
+    <td class="ps-num-cell gd-col-under-cell">${tn(kpi.underInv)}</td>
+    <td class="ps-num-cell gd-col-under-cell">${tn(kpi.underBoxes)}</td>
+    <td class="ps-num-cell gd-col-under-cell">${tn(kpi.underQty)}</td>
+    <td class="ps-num-cell gd-col-issue-cell">${tn(kpi.issueInv)}</td>
+    <td class="ps-num-cell gd-col-issue-cell">${tn(kpi.issueBoxes)}</td>
+    <td class="ps-num-cell gd-col-issue-cell">${tn(kpi.issueQty)}</td>
+    <td class="ps-num-cell gd-col-pend-cell">${tn(kpi.pendInv)}</td>
+    <td class="ps-num-cell gd-col-pend-cell">${tn(kpi.pendBoxes)}</td>
+    <td class="ps-num-cell gd-col-pend-cell">${tn(kpi.pendQty)}</td>
+    <td class="ps-num-cell gd-col-tat-cell tat-beyond">${kpi.beyondCap>0?tn(kpi.beyondCap):'-'}</td>
+    <td class="ps-num-cell gd-col-tat-cell tat-above">${tn(kpi.aboveTAT)}</td>
+    <td class="ps-num-cell gd-col-tat-cell tat-within">${tn(kpi.withinTAT)}</td>
+    <td class="ps-num-cell gd-col-tat-cell tat-pct-above">${tAbovePct}</td>
+    <td class="ps-num-cell gd-col-tat-cell tat-pct-within">${tWithinPct}</td>
   </tr>`);
 
   document.getElementById('gdBody').innerHTML=rows.join('');
@@ -6757,84 +7242,86 @@ function renderGRNDash(){
 
   const _kn=v=>v===0?'—':v.toLocaleString();
 
-  // ── Section block: header + 3 stacked label-value rows ──
-  // Each section is a single card with a coloured header bar, then rows for each metric.
-  const secBlock=(title,color,icon,rows)=>{
-    const rowsHtml=rows.map((r,i)=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;${i<rows.length-1?'border-bottom:1px solid var(--border)':''}">
-        <div style="display:flex;align-items:center;gap:7px;min-width:0">
-          <span style="font-size:13px;flex-shrink:0">${r.icon}</span>
-          <span style="font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.label}</span>
+  // ── 3D KPI LABEL TEMPLATES ──
+  const kpiCard=(theme,icon,title,rows3)=>{
+    const rowsHtml=rows3.map((r,i)=>`
+      <div class="gd-kpi-row">
+        <div class="gd-kpi-row-left">
+          <span class="gd-kpi-row-icon">${r.icon}</span>
+          <span class="gd-kpi-row-label">${r.label}</span>
         </div>
-        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:${color};flex-shrink:0;margin-left:10px">${r.val}</span>
+        <span class="gd-kpi-row-val${r.cls?' '+r.cls:''}">${r.val}</span>
       </div>`).join('');
-    return`<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;min-width:0;height:100%">
-      <!-- Section header bar -->
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,${color}14,${color}08);border-bottom:2px solid ${color}30">
-        <span style="font-size:15px;flex-shrink:0">${icon}</span>
-        <span style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">${title}</span>
-        <span style="font-size:9px;font-weight:700;color:${color}99;font-family:var(--font-mono);flex-shrink:0">${todayDMY}</span>
+    return`<div class="gd-kpi-card ${theme}">
+      <div class="gd-kpi-hdr">
+        <div class="gd-kpi-icon">${icon}</div>
+        <div class="gd-kpi-title">${title}</div>
+        <div class="gd-kpi-date">${todayDMY}</div>
       </div>
-      <!-- Metric rows -->
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
-        ${rowsHtml}
-      </div>
+      <div class="gd-kpi-body">${rowsHtml}</div>
     </div>`;
   };
 
-  // ── TAT section: header + 2 stacked rows (Within TAT / Above TAT) with % sub-label ──
-  const tatBlock=`<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;min-width:0;height:100%">
-    <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:linear-gradient(135deg,#a855f714,#a855f708);border-bottom:2px solid #a855f730">
-      <span style="font-size:15px;flex-shrink:0">⏱️</span>
-      <span style="font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#a855f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">TAT Analysis</span>
-      <span style="font-size:9px;font-weight:700;color:#a855f799;font-family:var(--font-mono);flex-shrink:0">${todayDMY}</span>
+  // ── TAT card (2 rows with % sub-label) ──
+  const tatCard=`<div class="gd-kpi-card gd-kpi-tat">
+    <div class="gd-kpi-hdr">
+      <div class="gd-kpi-icon">⏱️</div>
+      <div class="gd-kpi-title">TAT Analysis</div>
+      <div class="gd-kpi-date">${todayDMY}</div>
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:13px">✅</span>
+    <div class="gd-kpi-body">
+      <div class="gd-kpi-row">
+        <div class="gd-kpi-row-left">
+          <span class="gd-kpi-row-icon">✅</span>
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--ink2)">Within TAT</div>
-            <div style="font-size:10px;font-weight:700;color:var(--green);margin-top:1px">${tWithinPctKpi}</div>
+            <div class="gd-kpi-row-label">Within TAT</div>
+            <div class="gd-kpi-row-sub" style="color:#059669">${tWithinPctKpi}</div>
           </div>
         </div>
-        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--green);flex-shrink:0;margin-left:10px">${_kn(kpi.withinTAT)}</span>
+        <span class="gd-kpi-row-val tat-within">${_kn(kpi.withinTAT)}</span>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px">
-        <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:13px">⚠️</span>
+      <div class="gd-kpi-row">
+        <div class="gd-kpi-row-left">
+          <span class="gd-kpi-row-icon">⚠️</span>
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--ink2)">Above TAT</div>
-            <div style="font-size:10px;font-weight:700;color:var(--red);margin-top:1px">${tAbovePctKpi}</div>
+            <div class="gd-kpi-row-label">Above TAT</div>
+            <div class="gd-kpi-row-sub" style="color:#dc2626">${tAbovePctKpi}</div>
           </div>
         </div>
-        <span style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--red);flex-shrink:0;margin-left:10px">${_kn(kpi.aboveTAT)}</span>
+        <span class="gd-kpi-row-val tat-above">${_kn(kpi.aboveTAT)}</span>
+      </div>
+      <div class="gd-kpi-row">
+        <div class="gd-kpi-row-left">
+          <span class="gd-kpi-row-icon">🚫</span>
+          <div>
+            <div class="gd-kpi-row-label">Beyond Capacity</div>
+          </div>
+        </div>
+        <span class="gd-kpi-row-val" style="color:#7c3aed">${_kn(kpi.beyondCap)}</span>
       </div>
     </div>
   </div>`;
 
 
   document.getElementById('gdKpiStrip').innerHTML=`
-  <div style="width:100%;min-width:0;box-sizing:border-box">
-    <div class="gd-kpi-5col" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch">
-      ${secBlock("Today's Inward Details","#2563eb","🚛",[
-        {icon:'📦',label:'No. of Inv.',        val:_kn(tidPOs)},
-        {icon:'🗃️',label:'Total Boxes',        val:_kn(tidBoxes)},
-        {icon:'📊',label:'Total Inv. Qty',     val:_kn(tidQty)}])}
-      ${secBlock("Today's GRN Qty","#059669","✅",[
-        {icon:'📋',label:'No. of Inv.',        val:_kn(tgPOs)},
-        {icon:'🗃️',label:'Total Boxes',        val:_kn(tgBoxes)},
-        {icon:'📦',label:'Total GRN Qty',      val:_kn(tgQty)}])}
-      ${secBlock("Under Process GRN","#d97706","🔄",[
-        {icon:'🔄',label:'No. of Inv.',        val:_kn(kpi.underInv)},
-        {icon:'🗃️',label:'Total Boxes',        val:_kn(kpi.underBoxes)},
-        {icon:'📊',label:'Total Inv. Qty',     val:_kn(kpi.underQty)}])}
-      ${secBlock("GRN Pending w/ Issue","#dc2626","⚠️",[
-        {icon:'⚠️',label:'No. of Inv.',        val:_kn(kpi.issueInv)},
-        {icon:'🗃️',label:'Total Boxes',        val:_kn(kpi.issueBoxes)},
-        {icon:'📊',label:'Total Inv. Qty',     val:_kn(kpi.issueQty)}])}
-      ${tatBlock}
-    </div>
+  <div class="gd-kpi-grid">
+    ${kpiCard('gd-kpi-inward','🚛',"Today's Inward Details",[
+      {icon:'📋',label:'No. of Inv.',    val:_kn(tidPOs)},
+      {icon:'🗃️',label:'Total Boxes',   val:_kn(tidBoxes)},
+      {icon:'📊',label:'Total Inv. Qty',val:_kn(tidQty)}])}
+    ${kpiCard('gd-kpi-grn','✅',"Today's GRN Qty",[
+      {icon:'📋',label:'No. of Inv.',    val:_kn(tgPOs)},
+      {icon:'🗃️',label:'Total Boxes',   val:_kn(tgBoxes)},
+      {icon:'📦',label:'Total GRN Qty', val:_kn(tgQty)}])}
+    ${kpiCard('gd-kpi-under','⏳',"Under Process GRN",[
+      {icon:'🔄',label:'No. of Inv.',    val:_kn(kpi.underInv)},
+      {icon:'🗃️',label:'Total Boxes',   val:_kn(kpi.underBoxes)},
+      {icon:'📊',label:'Total Inv. Qty',val:_kn(kpi.underQty)}])}
+    ${kpiCard('gd-kpi-issue','⚠️',"GRN Pending w/ Issue",[
+      {icon:'⚠️',label:'No. of Inv.',    val:_kn(kpi.issueInv)},
+      {icon:'🗃️',label:'Total Boxes',   val:_kn(kpi.issueBoxes)},
+      {icon:'📊',label:'Total Inv. Qty',val:_kn(kpi.issueQty)}])}
+    ${tatCard}
   </div>`;
 }
 
@@ -6884,6 +7371,327 @@ function exportGRNDash(){
   a.download='GRN_Dashboard_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   toast('GRN Dashboard exported — '+sortedDates.length+' dates','ok');
 }
+// ── EXCEL EXPORT: GRN DASHBOARD ──────────────────────────────────────────────
+function exportGRNDashExcel(){
+  if(!inwardData.length){toast('No data to export','warn');return;}
+
+  function _doExcel(){
+    const fromVal=(document.getElementById('gdDateFrom').value||'').trim();
+    const toVal  =(document.getElementById('gdDateTo').value||'').trim();
+
+    // ── Rebuild per-date rows (mirrors renderGRNDash logic exactly) ──
+    const byDate={};
+    inwardData.forEach(inv=>{
+      const d=inv.date||'—';
+      if(!_gdDateMatchFilter(d,fromVal,toVal))return;
+      if(!byDate[d])byDate[d]=[];
+      byDate[d].push(inv);
+    });
+    const sortedDates=Object.keys(byDate).sort((a,b)=>{
+      const da=_gdParseDate(a),db=_gdParseDate(b);
+      if(da&&db)return da-db;
+      return a.localeCompare(b);
+    });
+    if(!sortedDates.length){toast('No dates to export','warn');return;}
+
+    const DAILY_CAP=30000;
+    const kpi={unloadInv:0,unloadBoxes:0,unloadQty:0,doneInv:0,doneBoxes:0,doneQty:0,underInv:0,underBoxes:0,underQty:0,issueInv:0,issueBoxes:0,issueQty:0,pendInv:0,pendBoxes:0,pendQty:0,beyondCap:0,aboveTAT:0,withinTAT:0};
+
+    const dataRows=sortedDates.map(date=>{
+      const invList=byDate[date];
+      const uInv=invList.length,uBoxes=invList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),uQty=invList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+      const doneList=invList.filter(i=>i.grnStatus==='Done');
+      const dInv=doneList.length,dBoxes=doneList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),dQty=doneList.reduce((s,i)=>s+(parseInt(i.grnQty)||parseInt(i.totalInvQty)||0),0);
+      const trueUnder=invList.filter(i=>i.grnStatus!=='Done'&&!(i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done')));
+      const upInv=trueUnder.length,upBoxes=trueUnder.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),upQty=trueUnder.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+      const issueList=invList.filter(i=>i.grnStatus!=='Done'&&i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done'));
+      const iInv=issueList.length,iBoxes=issueList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+      const pendList=invList.filter(i=>i.grnStatus!=='Done');
+      const pInv=pendList.length,pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+      let capRem=DAILY_CAP,beyondQty=0;
+      const wcQty={};
+      invList.forEach(inv=>{
+        const qty=parseInt(inv.totalInvQty)||0;
+        if(capRem<=0){beyondQty+=qty;}
+        else if(qty<=capRem){wcQty[inv.id]=qty;capRem-=qty;}
+        else{wcQty[inv.id]=capRem;beyondQty+=qty-capRem;capRem=0;}
+      });
+      const beyond=beyondQty;
+      const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wcQty[i.id]||0)>0);
+      const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+      const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+      const t=above+within;
+      const abovePct=t>0?(above/t)*100:0;
+      const withinPct=t>0?(within/t)*100:0;
+      kpi.unloadInv+=uInv;kpi.unloadBoxes+=uBoxes;kpi.unloadQty+=uQty;
+      kpi.doneInv+=dInv;kpi.doneBoxes+=dBoxes;kpi.doneQty+=dQty;
+      kpi.underInv+=upInv;kpi.underBoxes+=upBoxes;kpi.underQty+=upQty;
+      kpi.issueInv+=iInv;kpi.issueBoxes+=iBoxes;kpi.issueQty+=iQty;
+      kpi.pendInv+=pInv;kpi.pendBoxes+=pBoxes;kpi.pendQty+=pQty;
+      kpi.beyondCap+=beyond;kpi.aboveTAT+=above;kpi.withinTAT+=within;
+      return{date,uInv,uBoxes,uQty,dInv,dBoxes,dQty,upInv,upBoxes,upQty,iInv,iBoxes,iQty,pInv,pBoxes,pQty,beyond,above,within,abovePct,withinPct};
+    });
+
+    // ── Build workbook ──
+    const wb=XLSX.utils.book_new();
+    const ws={};
+
+    // ─── Colour palette (ARGB hex, no #) ───
+    const C={
+      titleBg:'FF1E3A8A',titleFg:'FFFFFFFF',
+      subBg:'FF1E3A8A',  subFg:'FF93C5FD',
+      grpBlueBg:'FFBFDBFE',grpBlueFg:'FF1E3A8A',
+      grpGreenBg:'FFA7F3D0',grpGreenFg:'FF065F46',
+      grpYellowBg:'FFFDE68A',grpYellowFg:'FF92400E',
+      grpRedBg:'FFFECACA',grpRedFg:'FF991B1B',
+      grpOrangeBg:'FFFED7AA',grpOrangeFg:'FF7C2D12',
+      grpPurpleBg:'FFDDD6FE',grpPurpleFg:'FF4C1D95',
+      subHdrBlueBg:'FFDBEAFE',subHdrBlueFg:'FF2563EB',
+      subHdrGreenBg:'FFD1FAE5',subHdrGreenFg:'FF065F46',
+      subHdrYellowBg:'FFFEF3C7',subHdrYellowFg:'FF92400E',
+      subHdrRedBg:'FFFEE2E2',subHdrRedFg:'FF991B1B',
+      subHdrOrangeBg:'FFFFEDD5',subHdrOrangeFg:'FF7C2D12',
+      subHdrPurpleBg:'FFEDE9FE',subHdrPurpleFg:'FF4C1D95',
+      frozenBg:'FFF0F3FF',
+      altBg:'FFFAFBFF',
+      totalBg:'FFBBF7D0',totalFg:'FF065F46',
+      ink:'FF0D1240',blue:'FF2563EB',green:'FF065F46',
+      yellow:'FF92400E',red:'FF991B1B',orange:'FF7C2D12',purple:'FF4C1D95',
+      white:'FFFFFFFF',
+    };
+
+    // Helper builders
+    const fill=(argb,type='solid')=>({patternType:type,fgColor:{argb}});
+    const font=(argb,bold=false,sz=10)=>({name:'Arial',sz,bold,color:{argb}});
+    const aln=(h,v='center',wrap=true)=>({horizontal:h,vertical:v,wrapText:wrap});
+    const bdr=(style='thin',argb='FFB0BCE8')=>{const s={style,color:{argb}};return{top:s,bottom:s,left:s,right:s};};
+    const thickBot=(argb='FF7C9EE0')=>{const t={style:'thin',color:{argb:'FFB0BCE8'}},b={style:'medium',color:{argb}};return{top:t,bottom:b,left:t,right:t};};
+
+    function sc(r,c,v,style={}){
+      const addr=XLSX.utils.encode_cell({r,c});
+      ws[addr]={v,t:typeof v==='number'?'n':'s',...(style?{s:style}:{})};
+    }
+    function merge(rs,cs,re,ce){
+      if(!ws['!merges'])ws['!merges']=[];
+      ws['!merges'].push({s:{r:rs,c:cs},e:{r:re,c:ce}});
+    }
+
+    const NCOLS=22;
+
+    // ── Row 0: Title banner ──
+    merge(0,0,0,NCOLS-1);
+    sc(0,0,'📊 Date-wise GRN Status Dashboard',{font:font(C.titleFg,true,14),fill:fill(C.titleBg),alignment:aln('center'),border:bdr()});
+    for(let c=1;c<NCOLS;c++)sc(0,c,'',{fill:fill(C.titleBg),border:bdr()});
+
+    // ── Row 1: Sub-title ──
+    merge(1,0,1,NCOLS-1);
+    sc(1,0,'Vehicle-wise Inward  ·  GRN Accomplishment  ·  TAT Analysis',{font:{...font(C.subFg,false,10),italic:true},fill:fill(C.subBg),alignment:aln('center'),border:bdr()});
+    for(let c=1;c<NCOLS;c++)sc(1,c,'',{fill:fill(C.subBg),border:bdr()});
+
+    // ── Row 2: blank spacer ──
+    for(let c=0;c<NCOLS;c++)sc(2,c,'',{fill:fill(C.white),border:bdr('hair','FFD0D7F0')});
+
+    // ── Row 3: Group headers ──
+    const grpDefs=[
+      {cs:0,ce:0,label:'',bg:C.white,fg:C.white},
+      {cs:1,ce:1,label:'',bg:C.white,fg:C.white},
+      {cs:2,ce:4,label:'Vehicle Unloading Details',bg:C.grpBlueBg,fg:C.grpBlueFg},
+      {cs:5,ce:7,label:'Accomplished GRN Details',bg:C.grpGreenBg,fg:C.grpGreenFg},
+      {cs:8,ce:10,label:'Under Process',bg:C.grpYellowBg,fg:C.grpYellowFg},
+      {cs:11,ce:13,label:'GRN Pending with Issue',bg:C.grpRedBg,fg:C.grpRedFg},
+      {cs:14,ce:16,label:'Total Pendency',bg:C.grpOrangeBg,fg:C.grpOrangeFg},
+      {cs:17,ce:21,label:'TAT (Turnaround Time)',bg:C.grpPurpleBg,fg:C.grpPurpleFg},
+    ];
+    grpDefs.forEach(g=>{
+      if(g.cs!==g.ce)merge(3,g.cs,3,g.ce);
+      sc(3,g.cs,g.label,{font:font(g.fg,true,10),fill:fill(g.bg),alignment:aln('center'),border:thickBot()});
+      for(let c=g.cs+1;c<=g.ce;c++)sc(3,c,'',{fill:fill(g.bg),border:thickBot()});
+    });
+
+    // ── Row 4: Sub-column headers ──
+    const subHdrs=[
+      {c:0,label:'#',bg:C.frozenBg,fg:C.grpBlueFg},
+      {c:1,label:'Vehicle Arrived Date',bg:C.frozenBg,fg:C.grpBlueFg},
+      {c:2,label:'No. of Inv.',bg:C.subHdrBlueBg,fg:C.subHdrBlueFg},
+      {c:3,label:'Total Boxes',bg:C.subHdrBlueBg,fg:C.subHdrBlueFg},
+      {c:4,label:'Total Inv. Qty',bg:C.subHdrBlueBg,fg:C.subHdrBlueFg},
+      {c:5,label:'No. of Inv.',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+      {c:6,label:'Total Boxes',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+      {c:7,label:'Total Received Qty',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+      {c:8,label:'No. of Inv.',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
+      {c:9,label:'Total Boxes',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
+      {c:10,label:'Total Inv. Qty',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
+      {c:11,label:'No. of Inv.',bg:C.subHdrRedBg,fg:C.subHdrRedFg},
+      {c:12,label:'Total Boxes',bg:C.subHdrRedBg,fg:C.subHdrRedFg},
+      {c:13,label:'Total Inv. Qty',bg:C.subHdrRedBg,fg:C.subHdrRedFg},
+      {c:14,label:'No. of Inv.',bg:C.subHdrOrangeBg,fg:C.subHdrOrangeFg},
+      {c:15,label:'Total Boxes',bg:C.subHdrOrangeBg,fg:C.subHdrOrangeFg},
+      {c:16,label:'Total Inv. Qty',bg:C.subHdrOrangeBg,fg:C.subHdrOrangeFg},
+      {c:17,label:'Beyond Capacity',bg:C.subHdrPurpleBg,fg:C.subHdrPurpleFg},
+      {c:18,label:'Above TAT',bg:C.subHdrRedBg,fg:C.subHdrRedFg},
+      {c:19,label:'Within TAT',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+      {c:20,label:'Above TAT %',bg:C.subHdrRedBg,fg:C.subHdrRedFg},
+      {c:21,label:'Within TAT %',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+    ];
+    subHdrs.forEach(h=>{
+      sc(4,h.c,h.label,{font:font(h.fg,true,9),fill:fill(h.bg),alignment:aln('center'),border:bdr()});
+    });
+
+    // ── Data rows (starting row 5) ──
+    const colFgMap={
+      2:C.blue,3:C.blue,4:C.blue,
+      5:C.green,6:C.green,7:C.green,
+      8:C.yellow,9:C.yellow,10:C.yellow,
+      11:C.red,12:C.red,13:C.red,
+      14:C.orange,15:C.orange,16:C.orange,
+      17:C.purple,18:C.red,19:C.green,20:C.red,21:C.green
+    };
+    const colBgMap=(alt)=>({
+      0:C.frozenBg,1:C.frozenBg,
+      2:alt?C.subHdrBlueBg:'FFEBF4FF',3:alt?C.subHdrBlueBg:'FFEBF4FF',4:alt?C.subHdrBlueBg:'FFEBF4FF',
+      5:alt?C.subHdrGreenBg:'FFEBFFF6',6:alt?C.subHdrGreenBg:'FFEBFFF6',7:alt?C.subHdrGreenBg:'FFEBFFF6',
+      8:alt?C.subHdrYellowBg:'FFFFFFF2',9:alt?C.subHdrYellowBg:'FFFFFFF2',10:alt?C.subHdrYellowBg:'FFFFFFF2',
+      11:alt?C.subHdrRedBg:'FFFFF7F7',12:alt?C.subHdrRedBg:'FFFFF7F7',13:alt?C.subHdrRedBg:'FFFFF7F7',
+      14:alt?C.subHdrOrangeBg:'FFFFFAF2',15:alt?C.subHdrOrangeBg:'FFFFFAF2',16:alt?C.subHdrOrangeBg:'FFFFFAF2',
+      17:alt?C.subHdrPurpleBg:'FFFAF7FF',18:alt?C.subHdrRedBg:'FFFFF7F7',19:alt?C.subHdrGreenBg:'FFEBFFF6',
+      20:alt?C.subHdrRedBg:'FFFFF7F7',21:alt?C.subHdrGreenBg:'FFEBFFF6'
+    });
+
+    const PCT_FMT='0.00"%"';
+    const NUM_FMT='#,##0';
+
+    dataRows.forEach((row,i)=>{
+      const r=5+i;
+      const alt=i%2===1;
+      const bgMap=colBgMap(alt);
+
+      const vals=[
+        i+1,row.date,
+        row.uInv,row.uBoxes,row.uQty,
+        row.dInv,row.dBoxes,row.dQty,
+        row.upInv,row.upBoxes,row.upQty,
+        row.iInv,row.iBoxes,row.iQty,
+        row.pInv,row.pBoxes,row.pQty,
+        row.beyond,row.above,row.within,
+        row.abovePct,row.withinPct
+      ];
+      vals.forEach((v,ci)=>{
+        const fg=colFgMap[ci]||C.ink;
+        const bold=ci<2;
+        const halign=ci>=2?'right':ci===0?'center':'left';
+        const fmt=ci>=20?PCT_FMT:ci>=2?NUM_FMT:undefined;
+        const cellStyle={font:font(fg,bold,10),fill:fill(bgMap[ci]||C.white),alignment:aln(halign,undefined,false),border:bdr()};
+        if(fmt)cellStyle.numFmt=fmt;
+        sc(r,ci,v,cellStyle);
+      });
+    });
+
+    // ── TOTAL row ──
+    const totalR=5+dataRows.length;
+    const tt=kpi.aboveTAT+kpi.withinTAT;
+    const totalVals=[
+      '','TOTAL',
+      kpi.unloadInv,kpi.unloadBoxes,kpi.unloadQty,
+      kpi.doneInv,kpi.doneBoxes,kpi.doneQty,
+      kpi.underInv,kpi.underBoxes,kpi.underQty,
+      kpi.issueInv,kpi.issueBoxes,kpi.issueQty,
+      kpi.pendInv,kpi.pendBoxes,kpi.pendQty,
+      kpi.beyondCap,kpi.aboveTAT,kpi.withinTAT,
+      tt>0?(kpi.aboveTAT/tt)*100:0,
+      tt>0?(kpi.withinTAT/tt)*100:0
+    ];
+    const totalBgByCol={
+      0:'FFE8EDFF',1:'FFE8F5E9',
+      2:'FFD0E8FF',3:'FFD0E8FF',4:'FFD0E8FF',
+      5:'FFBBFFD9',6:'FFBBFFD9',7:'FFBBFFD9',
+      8:'FFFFF0A0',9:'FFFFF0A0',10:'FFFFF0A0',
+      11:'FFFFD0D0',12:'FFFFD0D0',13:'FFFFD0D0',
+      14:'FFFFCF8A',15:'FFFFCF8A',16:'FFFFCF8A', // orange
+      17:'FFE0D0FF',18:'FFFFD0D0',19:'FFBBFFD9',20:'FFFFD0D0',21:'FFBBFFD9'
+    };
+    totalVals.forEach((v,ci)=>{
+      const fg=ci===0?C.white:ci===1?C.grpBlueFg:(colFgMap[ci]||C.ink);
+      const bg=ci===0?C.titleBg:(totalBgByCol[ci]||C.totalBg);
+      const halign=ci===0?'center':ci===1?'center':'right';
+      const fmt=ci>=20?PCT_FMT:ci>=2?NUM_FMT:undefined;
+      const cellStyle={font:font(fg,true,10),fill:fill(bg),alignment:aln(halign,undefined,false),border:bdr('medium','FF7C9EE0')};
+      if(fmt)cellStyle.numFmt=fmt;
+      sc(totalR,ci,v,cellStyle);
+    });
+
+    // ── Legend (2 rows below total) ──
+    const legR=totalR+2;
+    merge(legR,0,legR,3);
+    sc(legR,0,'LEGEND',{font:font(C.white,true,9),fill:fill(C.titleBg),alignment:aln('center'),border:bdr()});
+    for(let c=1;c<4;c++)sc(legR,c,'',{fill:fill(C.titleBg),border:bdr()});
+
+    const legends=[
+      ['Vehicle Unloading Details',C.subHdrBlueBg,C.blue],
+      ['Accomplished GRN Details',C.subHdrGreenBg,C.green],
+      ['Under Process',C.subHdrYellowBg,C.yellow],
+      ['GRN Pending with Issue',C.subHdrRedBg,C.red],
+      ['Total Pendency',C.subHdrOrangeBg,C.orange],
+      ['TAT (Turnaround Time)',C.subHdrPurpleBg,C.purple],
+    ];
+    legends.forEach(([label,bg,fg],li)=>{
+      const lr=legR+1+li;
+      merge(lr,0,lr,3);
+      sc(lr,0,label,{font:font(fg,true,9),fill:fill(bg),alignment:aln('left'),border:bdr()});
+      for(let c=1;c<4;c++)sc(lr,c,'',{fill:fill(bg),border:bdr()});
+    });
+
+    // ── Sheet range ──
+    const maxRow=legR+legends.length;
+    ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:maxRow,c:NCOLS-1}});
+
+    // ── Column widths ──
+    ws['!cols']=[
+      {wch:5},{wch:16},
+      {wch:10},{wch:11},{wch:13},
+      {wch:10},{wch:11},{wch:14},
+      {wch:10},{wch:11},{wch:13},
+      {wch:10},{wch:11},{wch:13},
+      {wch:10},{wch:11},{wch:13},
+      {wch:13},{wch:11},{wch:11},{wch:12},{wch:12}
+    ];
+
+    // ── Row heights ──
+    ws['!rows']=[];
+    ws['!rows'][0]={hpx:32};
+    ws['!rows'][1]={hpx:20};
+    ws['!rows'][2]={hpx:6};
+    ws['!rows'][3]={hpx:24};
+    ws['!rows'][4]={hpx:40};
+    dataRows.forEach((_,i)=>{ws['!rows'][5+i]={hpx:20};});
+    ws['!rows'][totalR]={hpx:22};
+
+    // ── Freeze panes ──
+    ws['!freeze']={xSplit:2,ySplit:5,topLeftCell:'C6',activePane:'bottomRight',state:'frozen'};
+
+    // ── Page setup ──
+    ws['!pageSetup']={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
+    ws['!sheetView']={showGridLines:true,zoomScale:90};
+
+    XLSX.utils.book_append_sheet(wb,ws,'GRN Status Dashboard');
+
+    const fname='GRN_Dashboard_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    XLSX.writeFile(wb,fname,{bookType:'xlsx',type:'binary',cellStyles:true});
+    toast('📊 Excel exported — '+sortedDates.length+' date'+(sortedDates.length!==1?'s':'')+' · '+fname,'ok');
+  }
+
+  // Load SheetJS with cellStyles support if not already present
+  if(typeof XLSX!=='undefined'&&XLSX.writeFile){
+    _doExcel();
+  }else{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>_doExcel();
+    s.onerror=()=>toast('Could not load Excel library','err');
+    document.head.appendChild(s);
+  }
+}
+// ── /EXCEL EXPORT: GRN DASHBOARD ─────────────────────────────────────────────
+
 // ── /GRN DASHBOARD ────────────────────────────────────────────────────────────
 
 function exportGRNDashImage(){
@@ -6914,9 +7722,15 @@ function exportGRNDashImage(){
     const iInv=issueList.length,iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
     const DAILY_CAP=30000;let capRem=DAILY_CAP,bcQty=0;const wc={};
     invList.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
-    const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wc[i.id]||0)>0);
-    const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wc[i.id]||0),0);
-    const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wc[i.id]||0),0);
+    // TAT: if uQty>=30k and within>=30k → above=0 (capacity fully consumed by Within TAT)
+    const tatList=invList.filter(i=>_gdParseDate(i.grnDate)&&_gdParseDate(i.issueResolvedDate));
+    const rawAboveJ=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    const rawWithinJ=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+    let above,within;
+    if(uQty>=DAILY_CAP){
+      if(rawWithinJ>=DAILY_CAP){within=DAILY_CAP;above=0;}
+      else{within=rawWithinJ;above=Math.min(rawAboveJ,DAILY_CAP-rawWithinJ);}
+    }else{above=rawAboveJ;within=rawWithinJ;}
     return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty};
   });
 
@@ -6965,10 +7779,7 @@ function exportGRNDashImage(){
   body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#0f172a 100%);color:var(--ink);padding:28px;min-height:100vh}
   .page{max-width:1280px;margin:0 auto}
 
-  /* ── PRINT BUTTON ── */
-  .print-btn{position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;border:none;padding:11px 22px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(59,130,246,.5);z-index:999;display:flex;align-items:center;gap:7px;letter-spacing:.3px}
-  .print-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(59,130,246,.6)}
-  @media print{.print-btn{display:none}body{background:#f1f5f9;padding:12px}.chart-box{break-inside:avoid}.tbl-wrap{break-inside:avoid}}
+  @media print{body{background:#f1f5f9;padding:12px}.chart-box{break-inside:avoid}.tbl-wrap{break-inside:avoid}}
 
   /* ── HEADER ── */
   .report-header{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.03));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12)}
@@ -7060,7 +7871,6 @@ function exportGRNDashImage(){
   /* ── FOOTER ── */
   .report-footer{margin-top:16px;text-align:center;font-size:10px;color:rgba(255,255,255,.2);font-weight:500;letter-spacing:.5px}
 </style></head><body>
-<button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
 <div class="page">
 
   <!-- HEADER -->
@@ -7510,10 +8320,77 @@ new Chart(document.getElementById('c3'),{
 <\/script>
 </body></html>`;
 
-  const win=window.open('','_blank','width=1400,height=960');
-  win.document.write(html);
-  win.document.close();
-  toast('3D Report opened in new window — use Print to save as PDF','ok');
+  // ── JPEG EXPORT via hidden iframe + html2canvas ──
+  // Scripts injected via innerHTML do NOT execute (browser security rule), so
+  // Chart.js never runs and html2canvas captures a blank page.
+  // Fix: render the full HTML document inside a hidden <iframe> so all scripts
+  // execute normally, wait for charts to finish, then capture with html2canvas.
+  function _doJpegExport(reportHtml){
+    const _now2=new Date();const _p2=n=>String(n).padStart(2,'0');
+    const fname='GRN_Report_'+_p2(_now2.getDate())+_p2(_now2.getMonth()+1)+_now2.getFullYear()+'_'+_p2(_now2.getHours())+_p2(_now2.getMinutes())+'.jpg';
+
+    // Build iframe positioned off-screen at fixed width
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:1400px;height:900px;border:none;z-index:-1;visibility:hidden';
+    document.body.appendChild(iframe);
+
+    // Write the full HTML into the iframe (scripts will execute)
+    const iDoc=iframe.contentDocument||iframe.contentWindow.document;
+    iDoc.open();
+    iDoc.write(reportHtml);
+    iDoc.close();
+
+    // Wait for Chart.js animations (1200ms) + font load + small buffer
+    const doCapture=()=>{
+      // Resize iframe to full content height before capture
+      const body=iframe.contentDocument.body;
+      const h=Math.max(body.scrollHeight,body.offsetHeight,900);
+      iframe.style.height=h+'px';
+
+      // Inject html2canvas into the PARENT document, then capture the iframe's body
+      window.html2canvas(body,{
+        scale:2,
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:'#0f172a',
+        width:1400,
+        windowWidth:1400,
+        logging:false
+      }).then(canvas=>{
+        document.body.removeChild(iframe);
+        canvas.toBlob(blob=>{
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');
+          a.href=url;a.download=fname;
+          document.body.appendChild(a);a.click();
+          document.body.removeChild(a);
+          setTimeout(()=>URL.revokeObjectURL(url),5000);
+          toast('Report saved as '+fname,'ok');
+        },'image/jpeg',0.95);
+      }).catch(err=>{
+        document.body.removeChild(iframe);
+        toast('JPEG export failed: '+err.message,'err');
+      });
+    };
+
+    // 2200ms: Chart.js animation (1200ms) + font load + render buffer
+    setTimeout(doCapture,2200);
+    toast('⏳ Generating JPEG report…','info');
+  }
+
+  // Load html2canvas into parent page if not already loaded, then export
+  function _launchExport(reportHtml){
+    if(typeof window.html2canvas==='function'){
+      _doJpegExport(reportHtml);
+    }else{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload=()=>_doJpegExport(reportHtml);
+      s.onerror=()=>toast('Could not load html2canvas — check internet connection','err');
+      document.head.appendChild(s);
+    }
+  }
+  _launchExport(html);
 }
 
 
@@ -7569,8 +8446,92 @@ function initUI(){
   }
 
   setInterval(()=>{if(fbConfig&&isOnline&&writeQueue.length>0)flushQueue();},30000);
-  // Re-fetch Google Sheet every 5 min if auto-sync was enabled
-  setInterval(()=>{if(LS.load('gsheet_auto_sync','')===('on'))_autoFetchGSheet();},5*60*1000);
+  // ── IMMEDIATE GOOGLE SHEET SYNC ──
+  // Poll a lightweight hash endpoint every 15 s. Full data fetch only when hash changes.
+  _startGSheetLiveSync();
+}
+
+// ── GSheet live-sync state ──
+let _gsLastHash='';       // last known hash string from the sheet
+let _gsSyncTimer=null;    // the setInterval handle
+let _gsSyncCountdown=0;   // seconds until next poll (for UI display)
+let _gsSyncCountTimer=null;
+
+function _startGSheetLiveSync(){
+  if(_gsSyncTimer)return; // already running
+  _gsSyncTimer=setInterval(_gsHashPoll, 15000);
+  // Run immediately once on login
+  _gsHashPoll();
+  // Countdown display — ticks every second
+  _gsSyncCountdown=15;
+  if(_gsSyncCountTimer)clearInterval(_gsSyncCountTimer);
+  _gsSyncCountTimer=setInterval(()=>{
+    _gsSyncCountdown=Math.max(0,_gsSyncCountdown-1);
+    const el=document.getElementById('gs-sync-countdown');
+    if(el)el.textContent=_gsSyncCountdown>0?'next check in '+_gsSyncCountdown+'s':'checking…';
+  },1000);
+}
+
+async function _gsHashPoll(){
+  const url=LS.load('gsheet_inward_url','');
+  if(!url||!currentUser)return;
+  _gsSyncCountdown=15; // reset countdown
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const sheetParam=(()=>{const s=LS.load('gsheet_inward_sheet','');return s?'&sheet='+encodeURIComponent(s):'';})();
+    const resp=await fetch(url+sep+'action=hash&_cb='+Date.now()+sheetParam,{cache:'no-cache'});
+    if(!resp.ok)return;
+    const json=await resp.json();
+    const newHash=json.hash||'';
+    if(!newHash)return;
+    if(newHash!==_gsLastHash){
+      // Hash changed — sheet was updated — do full fetch immediately
+      const wasEmpty=!_gsLastHash;
+      _gsLastHash=newHash;
+      await _autoFetchGSheetAsync();
+      if(!wasEmpty){
+        // Flash a "Sheet updated" indicator
+        const el=document.getElementById('gs-sync-status');
+        if(el){el.textContent='⚡ Sheet updated — synced';el.style.color='var(--green)';}
+        setTimeout(()=>{
+          const el2=document.getElementById('gs-sync-status');
+          if(el2){el2.textContent='✅ Live';el2.style.color='var(--green)';}
+        },4000);
+      }else{
+        const el=document.getElementById('gs-sync-status');
+        if(el){el.textContent='✅ Live';el.style.color='var(--green)';}
+      }
+    }else{
+      // Hash unchanged — no change in sheet
+      const el=document.getElementById('gs-sync-status');
+      if(el&&el.textContent!=='✅ Live'){el.textContent='✅ Live';el.style.color='var(--green)';}
+    }
+  }catch(e){
+    const el=document.getElementById('gs-sync-status');
+    if(el){el.textContent='⚠ Check failed';el.style.color='var(--orange)';}
+  }
+}
+
+// Async version of _autoFetchGSheet — awaitable for use in hash-poll
+async function _autoFetchGSheetAsync(){
+  const url=LS.load('gsheet_inward_url','');
+  if(!url)return;
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const sheetParam=(()=>{const s=LS.load('gsheet_inward_sheet','');return s?'&sheet='+encodeURIComponent(s):'';})();
+    const resp=await fetch(url+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
+    if(!resp.ok)return;
+    const json=await resp.json();
+    const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
+    if(!rows||!rows.length)return;
+    processGSheetInwardRows(rows,true);
+    if(currentUser){
+      setBanner('connected','✅ Sheet synced · '+rows.length+' rows · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+      setTimeout(()=>{
+        if(fbConfig&&currentUser)setBanner('connected',currentUser.type==='admin'?'✅ Firebase live · '+scannedAll.length+' records':'✅ Firebase live · Table '+String(currentUser.table).padStart(2,'0'));
+      },4000);
+    }
+  }catch(e){/* silent */}
 }
 
 // ── AUTO-FETCH Google Sheet silently on page open ──
@@ -7588,6 +8549,17 @@ function _autoFetchGSheet(){
       if(!rows||!rows.length)return;
       // silent=true → direct merge, no modal, no disruption to active sessions
       processGSheetInwardRows(rows,true);
+      // Brief banner confirmation (only show if page is loaded and user is present)
+      if(currentUser){
+        const prev=document.getElementById('live-banner')&&document.getElementById('live-banner').textContent;
+        setBanner('connected','✅ Sheet synced · '+rows.length+' rows · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+        // Restore normal banner after 4 seconds
+        setTimeout(()=>{
+          if(fbConfig&&currentUser){
+            setBanner('connected',currentUser.type==='admin'?'✅ Firebase live · '+scannedAll.length+' records':'✅ Firebase live · Table '+String(currentUser.table).padStart(2,'0'));
+          }
+        },4000);
+      }
     }catch(e){/* silent fail — no URL or network issue */}
   })();
 }
@@ -7836,14 +8808,16 @@ if(typeof _origRD==='function'){
 // ── COUNT-UP for stat numbers ──
 function countUp(el,target,ms){
   if(!el)return;
+  // Cancel any previous countUp running on this element
+  if(el._countUpTimer){clearInterval(el._countUpTimer);el._countUpTimer=null;}
   const start=parseInt(el.textContent)||0;
   if(start===target||Math.abs(target-start)<2){el.textContent=target;return;}
   const steps=Math.min(20,Math.abs(target-start));
   const inc=(target-start)/steps;
   let cur=start,n=0;
-  const t=setInterval(function(){
+  el._countUpTimer=setInterval(function(){
     n++;cur+=inc;el.textContent=Math.round(cur);
-    if(n>=steps){el.textContent=target;clearInterval(t);}
+    if(n>=steps){el.textContent=target;clearInterval(el._countUpTimer);el._countUpTimer=null;}
   },ms/steps);
 }
 const _origFUS=window.fastUpdateStats;
