@@ -7747,6 +7747,17 @@ function exportGRNDashImage(){
   const dateRange=fromVal&&toVal?`${fromVal} – ${toVal}`:fromVal?`From ${fromVal}`:toVal?`Till ${toVal}`:'All Dates';
   const n=v=>v===0?'—':v.toLocaleString();
 
+  // ── Today's Inward Details & GRN Qty (always today's date, independent of date filter) ──
+  const _todayKey=`${_p(_now.getDate())}/${_p(_now.getMonth()+1)}/${_now.getFullYear()}`;
+  const _todayInward=inwardData.filter(i=>i.date===_todayKey);
+  const _tidInv=_todayInward.length;
+  const _tidBoxes=_todayInward.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
+  const _tidQty=_todayInward.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+  const _todayGRN=inwardData.filter(i=>i.grnDate&&i.grnDate===_todayKey);
+  const _tgInv=_todayGRN.length;
+  const _tgBoxes=_todayGRN.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
+  const _tgQty=_todayGRN.reduce((s,i)=>s+(parseInt(i.grnQty)||parseInt(i.totalInvQty)||0),0);
+
   const tableRows=summary.map((r,i)=>{
     const t2=r.above+r.within;
     const wPct=t2>0?((r.within/t2)*100).toFixed(1)+'%':'—';
@@ -7868,8 +7879,41 @@ function exportGRNDashImage(){
   .grn{color:#4ade80;font-weight:700}.ylw{color:#fbbf24;font-weight:700}.red{color:#f87171;font-weight:700}.pur{color:#c084fc;font-weight:700}
   td.grn{color:#4ade80}td.ylw{color:#fbbf24}td.red{color:#f87171}td.pur{color:#c084fc}
 
+  /* ── TODAY KPI CARDS ── */
+  .today-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  .tkpi-card{
+    border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 6px 0 rgba(0,0,0,.25),0 12px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .tkpi-hdr{
+    display:flex;align-items:center;gap:10px;padding:13px 16px;
+  }
+  .tkpi-icon{
+    width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:18px;flex-shrink:0;background:rgba(255,255,255,.22);
+    box-shadow:0 2px 6px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .tkpi-title{
+    font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+    color:#fff;flex:1;text-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .tkpi-date{font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.7);flex-shrink:0;}
+  .tkpi-body{background:#fff;border-radius:0 0 16px 16px;flex:1;display:flex;flex-direction:column;}
+  .tkpi-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:8px;}
+  .tkpi-row+.tkpi-row{border-top:1px solid rgba(0,0,20,.07);}
+  .tkpi-row-left{display:flex;align-items:center;gap:8px;}
+  .tkpi-row-icon{font-size:15px;flex-shrink:0;}
+  .tkpi-row-label{font-size:12px;font-weight:600;color:#374151;}
+  .tkpi-row-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;flex-shrink:0;}
+  .tkpi-val-blue{color:#1d4ed8;}
+  .tkpi-val-green{color:#065f46;}
+  /* card colour themes */
+  .tkpi-inward .tkpi-hdr{background:linear-gradient(135deg,#1d4ed8,#3b82f6,#60a5fa);}
+  .tkpi-grn    .tkpi-hdr{background:linear-gradient(135deg,#065f46,#059669,#34d399);}
+
   /* ── FOOTER ── */
   .report-footer{margin-top:16px;text-align:center;font-size:10px;color:rgba(255,255,255,.2);font-weight:500;letter-spacing:.5px}
+
 </style></head><body>
 <div class="page">
 
@@ -7950,6 +7994,53 @@ function exportGRNDashImage(){
         <div class="kpi-lbl">Above TAT</div>
         <div class="kpi-val">${abovePct}%</div>
         <div class="kpi-sub">${n(T.above)} units<br>delayed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S INWARD & GRN KPI CARDS -->
+  <div class="section-label">📅 Today's Summary — ${_todayKey}</div>
+  <div class="today-kpi-grid">
+    <div class="tkpi-card tkpi-inward">
+      <div class="tkpi-hdr">
+        <div class="tkpi-icon">🚛</div>
+        <div class="tkpi-title">Today's Inward Details</div>
+        <div class="tkpi-date">${_todayKey}</div>
+      </div>
+      <div class="tkpi-body">
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">📋</span><span class="tkpi-row-label">No. of Invoices</span></div>
+          <span class="tkpi-row-val tkpi-val-blue">${n(_tidInv)}</span>
+        </div>
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">🗃️</span><span class="tkpi-row-label">Total Boxes</span></div>
+          <span class="tkpi-row-val tkpi-val-blue">${n(_tidBoxes)}</span>
+        </div>
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">📊</span><span class="tkpi-row-label">Total Inv. Qty</span></div>
+          <span class="tkpi-row-val tkpi-val-blue">${n(_tidQty)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="tkpi-card tkpi-grn">
+      <div class="tkpi-hdr">
+        <div class="tkpi-icon">✅</div>
+        <div class="tkpi-title">Today's GRN Qty</div>
+        <div class="tkpi-date">${_todayKey}</div>
+      </div>
+      <div class="tkpi-body">
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">📋</span><span class="tkpi-row-label">No. of Invoices</span></div>
+          <span class="tkpi-row-val tkpi-val-green">${n(_tgInv)}</span>
+        </div>
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">🗃️</span><span class="tkpi-row-label">Total Boxes</span></div>
+          <span class="tkpi-row-val tkpi-val-green">${n(_tgBoxes)}</span>
+        </div>
+        <div class="tkpi-row">
+          <div class="tkpi-row-left"><span class="tkpi-row-icon">📦</span><span class="tkpi-row-label">Total GRN Qty</span></div>
+          <span class="tkpi-row-val tkpi-val-green">${n(_tgQty)}</span>
+        </div>
       </div>
     </div>
   </div>
