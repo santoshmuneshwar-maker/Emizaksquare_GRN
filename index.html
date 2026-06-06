@@ -1884,7 +1884,7 @@ input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:po
             <th class="ps-num-hd gd-col-unload-sub">Total Inv. Qty</th>
             <th class="ps-num-hd gd-col-grn-sub">No. of Inv.</th>
             <th class="ps-num-hd gd-col-grn-sub">Total Boxes</th>
-            <th class="ps-num-hd gd-col-grn-sub">GRN Qty</th>
+            <th class="ps-num-hd gd-col-grn-sub">Total Received Qty</th>
             <th class="ps-num-hd gd-col-under-sub">No. of Inv.</th>
             <th class="ps-num-hd gd-col-under-sub">Total Boxes</th>
             <th class="ps-num-hd gd-col-under-sub">Total Inv. Qty</th>
@@ -3764,11 +3764,13 @@ function stagePendingUpload(type,data,fname){
  const pos=type==='po'?[...new Set(data.map(r=>r.poNo))].length:type==='inward'?[...new Set(data.map(r=>r.poNo))].length:0;
  let extraInfo='';
  if(type==='inward'){
- const newInvNos=new Set(data.map(r=>r.invNo).filter(Boolean));
- const existingInvNos=new Set(inwardData.map(r=>r.invNo).filter(Boolean));
- const toAdd=[...newInvNos].filter(v=>!existingInvNos.has(v)).length;
- const toUpdate=[...newInvNos].filter(v=>existingInvNos.has(v)).length;
- const toKeep=inwardData.filter(r=>r.invNo&&!newInvNos.has(r.invNo)).length;
+ // Unique key = PO No. + Invoice No. composite
+ const _pkey=r=>(r.poNo||'')+'||'+(r.invNo||'');
+ const newKeys=new Set(data.map(_pkey).filter(k=>k!=='||'));
+ const existingKeys=new Set(inwardData.map(_pkey).filter(k=>k!=='||'));
+ const toAdd=[...newKeys].filter(v=>!existingKeys.has(v)).length;
+ const toUpdate=[...newKeys].filter(v=>existingKeys.has(v)).length;
+ const toKeep=inwardData.filter(r=>_pkey(r)!=='||'&&!newKeys.has(_pkey(r))).length;
  extraInfo=`<div style="margin-top:8px;background:#f0fdf4;border:1.5px solid rgba(5,150,105,.2);border-radius:8px;padding:9px 12px;font-size:11px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
  <div><div style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--green)">${toAdd}</div><div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px">New Invoices</div></div>
  <div><div style="font-family:var(--font-mono);font-size:16px;font-weight:800;color:var(--orange)">${toUpdate}</div><div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px">Updated</div></div>
@@ -3805,9 +3807,10 @@ function confirmUpload(){
  },2000);
  }
  }else if(type==='inward'){
-
- const newInvNos=new Set(data.map(r=>r.invNo).filter(Boolean));
- const kept=inwardData.filter(r=>r._gs2?!newInvNos.has(r.invNo):(r.invNo&&!newInvNos.has(r.invNo)));
+ // Unique key = PO No. + Invoice No. composite
+ const _ck=r=>(r.poNo||'')+'||'+(r.invNo||'');
+ const newKeys=new Set(data.map(_ck).filter(k=>k!=='||'));
+ const kept=inwardData.filter(r=>r._gs2?!newKeys.has(_ck(r)):(_ck(r)!=='||'&&!newKeys.has(_ck(r))));
  inwardData=[...kept,...data];
  LS.save('inward',inwardData);LS.save('inward_fname',fname);
  LS.remove('inward_cleared');
@@ -4331,17 +4334,19 @@ function processGSheetInwardRows(rows,silent){
  if(missingCartons)warns.push('No. of Cartons');
 
  if(silent){
-
- const newInvNos=new Set(data.map(r=>r.invNo).filter(Boolean));
+ // Unique key = PO No. + Invoice No. (composite) to allow same inv no. under different POs
+ const _key=r=>(r.poNo||'')+'||'+(r.invNo||'');
+ const newKeys=new Set(data.map(_key).filter(k=>k!=='||'));
  const kept=inwardData.filter(r=>{
- if(r._gs2)return!newInvNos.has(r.invNo); // preserve Sheet 2 rows not covered by Sheet 1
- return r.invNo&&!newInvNos.has(r.invNo); // preserve non-Sheet-2 rows not in this batch
+ if(r._gs2)return!newKeys.has(_key(r)); // preserve Sheet 2 rows not covered by Sheet 1
+ return _key(r)!=='||'&&!newKeys.has(_key(r)); // preserve non-Sheet-2 rows not in this batch
  });
  const merged=data.map(newRow=>{
- if(!newRow.invNo)return newRow;
- const existing=inwardData.find(e=>e.invNo===newRow.invNo);
+ if(!newRow.poNo&&!newRow.invNo)return newRow;
+ const existing=inwardData.find(e=>_key(e)===_key(newRow));
  if(!existing)return newRow;
- return{...newRow,grnStatus:existing.grnStatus||newRow.grnStatus,grnRemark:existing.grnRemark||newRow.grnRemark,issueResolvedDate:newRow.issueResolvedDate||existing.issueResolvedDate||'',grnDate:newRow.grnDate||existing.grnDate||'',grnQty:newRow.grnQty||existing.grnQty||'',tat:newRow.tat||existing.tat||'',id:existing.id||newRow.id};
+ // Always take GRN fields from the sheet (newRow) as-is; only preserve id from existing
+ return{...newRow,grnStatus:newRow.grnStatus||existing.grnStatus||'Pending',grnRemark:newRow.grnRemark||existing.grnRemark||'',issueResolvedDate:newRow.issueResolvedDate||existing.issueResolvedDate||'',grnDate:newRow.grnDate||existing.grnDate||'',grnQty:newRow.grnQty||existing.grnQty||'',tat:newRow.tat||existing.tat||'',id:existing.id||newRow.id};
  });
  inwardData=[...kept,...merged];
  LS.save('inward',inwardData);
@@ -4538,15 +4543,18 @@ function _processGSheet2Rows(rows,silent){
  return;
  }
 
- const newInvNos=new Set(data.map(r=>r.invNo).filter(Boolean));
+ // Unique key = PO No. + Invoice No. (composite) to allow same inv no. under different POs
+ const _key2=r=>(r.poNo||'')+'||'+(r.invNo||'');
+ const newKeys2=new Set(data.map(_key2).filter(k=>k!=='||'));
  const merged=data.map(newRow=>{
- if(!newRow.invNo)return newRow;
- const existing=inwardData.find(e=>e.invNo===newRow.invNo);
+ if(!newRow.poNo&&!newRow.invNo)return newRow;
+ const existing=inwardData.find(e=>_key2(e)===_key2(newRow));
  if(!existing)return newRow;
 
  return{...newRow,
- grnStatus:existing.grnStatus||newRow.grnStatus,
- grnRemark:existing.grnRemark||newRow.grnRemark,
+ // Always take GRN fields from the sheet (newRow) as-is; only preserve id from existing
+ grnStatus:newRow.grnStatus||existing.grnStatus||'Pending',
+ grnRemark:newRow.grnRemark||existing.grnRemark||'',
  issueResolvedDate:newRow.issueResolvedDate||existing.issueResolvedDate||'',
  grnDate:newRow.grnDate||existing.grnDate||'',
  grnQty:newRow.grnQty||existing.grnQty||'',
@@ -4555,7 +4563,7 @@ function _processGSheet2Rows(rows,silent){
  };
  });
 
- const kept=inwardData.filter(r=>!r._gs2||!r.invNo||!newInvNos.has(r.invNo));
+ const kept=inwardData.filter(r=>!r._gs2||_key2(r)==='||'||!newKeys2.has(_key2(r)));
  inwardData=[...kept,...merged];
  LS.save('inward',inwardData);
  LS.save('inward_fname','Sheet 1 + Sheet 2');
@@ -7667,10 +7675,12 @@ function renderPOStatus(){
  if(m){const y=m[3].length===2?2000+parseInt(m[3]):parseInt(m[3]);const dt=new Date(y,parseInt(m[2])-1,parseInt(m[1]));return isNaN(dt.getTime())?null:dt;}
  const dt=new Date(s);return(!isNaN(dt.getTime())&&dt.getFullYear()>1970&&dt.getFullYear()<2100)?dt:null;
  };
+ // TAT Rule: Pending → GRN Pending; else |GRN Date - Issue Resolved Date| ≤1 → Within TAT, >1 → Above TAT
+ const grnSt=(inv.grnStatus||'').toLowerCase().trim();
  const gd=parseD(inv.grnDate),rd=parseD(inv.issueResolvedDate);
  let lbl,col,bg,bdr,ico;
- if(!gd){lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';}
- else if(rd){const diffDays=Math.abs(Math.round((rd-gd)/(1000*60*60*24)));if(diffDays<=1){lbl='Within TAT';col='var(--green)';bg='var(--green-d)';bdr='rgba(34,197,94,.25)';ico='\u2705';}else{lbl='Above TAT';col='var(--red)';bg='var(--red-d)';bdr='rgba(220,38,38,.2)';ico='\u26A0\uFE0F';}}
+ if(!grnSt||grnSt==='pending'||grnSt==='grn pending'){lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';}
+ else if(gd&&rd){const diffDays=Math.abs(Math.round((rd-gd)/(1000*60*60*24)));if(diffDays<=1){lbl='Within TAT';col='var(--green)';bg='var(--green-d)';bdr='rgba(34,197,94,.25)';ico='\u2705';}else{lbl='Above TAT';col='var(--red)';bg='var(--red-d)';bdr='rgba(220,38,38,.2)';ico='\u26A0\uFE0F';}}
  else{lbl='GRN Pending';col='var(--orange)';bg='var(--orange-d)';bdr='rgba(217,119,6,.25)';ico='\u23F3';}
  const tatCell=`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;color:${col};background:${bg};border:1px solid ${bdr}">${ico} ${lbl}</span>`;
 
@@ -8586,11 +8596,13 @@ function _gdParseDate(s){
  const d=new Date(s);return(!isNaN(d.getTime())&&d.getFullYear()>1970&&d.getFullYear()<2100)?d:null;
 }
 function _gdTAT(inv){
-
- const arrived=_gdParseDate(inv.date);
- const gd=_gdParseDate(inv.grnDate)||_gdParseDate(inv.issueResolvedDate);
- if(!arrived||!gd)return'grn_pending';
- const days=Math.round((gd-arrived)/(1000*60*60*24));
+ // Rule: Pending GRN → grn_pending; diff between GRN Date & Issue Resolved Date determines TAT
+ const status=(inv.grnStatus||'').toLowerCase().trim();
+ if(!status||status==='pending'||status==='grn pending')return'grn_pending';
+ const gd=_gdParseDate(inv.grnDate);
+ const rd=_gdParseDate(inv.issueResolvedDate);
+ if(!gd||!rd)return'grn_pending';
+ const days=Math.abs(Math.round((rd-gd)/(1000*60*60*24)));
  return days<=1?'within':'above';
 }
 function _gdDateMatchFilter(dateStr,from,to){
@@ -8724,10 +8736,14 @@ function renderGRNDash(){
  });
  const beyond=beyondCapQty;
 
- const tatList=invList.filter(i=>_gdParseDate(i.grnDate)||_gdParseDate(i.issueResolvedDate));
+ // tatList: all invoices — _gdTAT() handles pending/within/above based on grnStatus + date diff
+ const tatList=invList;
 
- const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+ const withinRaw=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+ const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+ // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
+ const within=withinRaw;
+ const above=(uQty>=30000&&withinRaw>=30000)?0:aboveRaw;
  const tatTotal=above+within;
  const abovePct=tatTotal>0?((above/tatTotal)*100).toFixed(2)+'%':'0.00%';
  const withinPct=tatTotal>0?((within/tatTotal)*100).toFixed(2)+'%':'0.00%';
@@ -8921,7 +8937,7 @@ function exportGRNDash(){
  if(!inwardData.length){toast('No data to export','warn');return;}
  const fromVal=(document.getElementById('gdDateFrom').value||'').trim();
  const toVal =(document.getElementById('gdDateTo').value||'').trim();
- const header=['Date','Unload Inv','Unload Boxes','Unload Qty','Done Inv','Done Boxes','GRN Qty','Under Inv','Under Boxes','Under Qty','Issue Inv','Issue Boxes','Issue Qty','Pend Inv','Pend Boxes','Pend Qty','Beyond Capacity','Above TAT','Within TAT','Above TAT %','Within TAT %'];
+ const header=['Date','Unload Inv','Unload Boxes','Unload Qty','Done Inv','Done Boxes','Total Received Qty','Under Inv','Under Boxes','Under Qty','Issue Inv','Issue Boxes','Issue Qty','Pend Inv','Pend Boxes','Pend Qty','Beyond Capacity','Above TAT','Within TAT','Above TAT %','Within TAT %'];
  const byDate={};
  inwardData.forEach(inv=>{
  const d=inv.date||'—';
@@ -8952,9 +8968,12 @@ function exportGRNDash(){
  else{wcQty[inv.id]=capRem;beyondQty+=qty-capRem;capRem=0;}
  });
  const beyond=beyondQty;
- const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wcQty[i.id]||0)>0);
- const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+ // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
+ const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
+ const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+ // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
+ const above=(uQty>=30000&&within>=30000)?0:aboveRaw;
  const t=above+within;
  return[date,uInv,uBoxes,uQty,dInv,dBoxes,dQty,upInv,upBoxes,upQty,iInv,iBoxes,iQty,pInv,pBoxes,pQty,beyond,above,within,t>0?((above/t)*100).toFixed(2)+'%':'0.00%',t>0?((within/t)*100).toFixed(2)+'%':'0.00%'];
  });
@@ -9008,9 +9027,12 @@ function exportGRNDashExcel(){
  else{wcQty[inv.id]=capRem;beyondQty+=qty-capRem;capRem=0;}
  });
  const beyond=beyondQty;
- const tatList=doneList.filter(i=>_gdParseDate(i.grnDate)&&(wcQty[i.id]||0)>0);
- const above=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+ // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
+ const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
+ const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
+ // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
+ const above=(uQty>=30000&&within>=30000)?0:aboveRaw;
  const t=above+within;
  const abovePct=t>0?(above/t)*100:0;
  const withinPct=t>0?(within/t)*100:0;
@@ -9100,7 +9122,7 @@ function exportGRNDashExcel(){
  {c:4,label:'Total Inv. Qty',bg:C.subHdrBlueBg,fg:C.subHdrBlueFg},
  {c:5,label:'No. of Inv.',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
  {c:6,label:'Total Boxes',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
- {c:7,label:'GRN Qty',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
+ {c:7,label:'Total Received Qty',bg:C.subHdrGreenBg,fg:C.subHdrGreenFg},
  {c:8,label:'No. of Inv.',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
  {c:9,label:'Total Boxes',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
  {c:10,label:'Total Inv. Qty',bg:C.subHdrYellowBg,fg:C.subHdrYellowFg},
@@ -9335,7 +9357,8 @@ function exportCombinedDashImage(){
  const iInv=issueList.length,iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  let capRem=DAILY_CAP,bcQty=0;const wc={};
  il.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
- const tatList=il.filter(i=>_gdParseDate(i.grnDate)&&_gdParseDate(i.issueResolvedDate));
+ // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
+ const tatList=il;
  const rawAbove=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const rawWithin=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  let above,within;
@@ -10336,7 +10359,8 @@ function exportGRNDashImage(){
  const DAILY_CAP=30000;let capRem=DAILY_CAP,bcQty=0;const wc={};
  invList.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
 
- const tatList=invList.filter(i=>_gdParseDate(i.grnDate)&&_gdParseDate(i.issueResolvedDate));
+ // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
+ const tatList=invList;
  const rawAboveJ=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const rawWithinJ=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  let above,within;
