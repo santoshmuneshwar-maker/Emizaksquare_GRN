@@ -4026,6 +4026,8 @@ function onGSheetSheetInput(){
  const sh=(document.getElementById('gsheet-inward-sheet').value||'').trim();
  const hint=document.getElementById('gs-sheet-hint');
  const hintName=document.getElementById('gs-sheet-hint-name');
+ // Save to localStorage so hash poll and auto-sync always use the correct sheet name
+ if(sh){LS.save('gsheet_inward_sheet',sh);}else{LS.remove('gsheet_inward_sheet');}
 
  const tagContainer=document.getElementById('gs-sheet-tags');
  if(tagContainer){
@@ -5115,15 +5117,8 @@ function buildSizeBreakdownGrid(po, clearValues){
 
  grid.innerHTML=sizes.map(sz=>{
  let val='';
- if(clearValues){
-   // Pre-fill with previous carton's value for same size (operator can change)
-   if(prevCartonBd[sz]!==undefined && prevCartonBd[sz]>0){
-     val=String(prevCartonBd[sz]);
-   }
- } else if(existing[sz]){
+ if(!clearValues && existing[sz]){
    val=existing[sz];
- } else {
-   val='';
  }
  const poQtyHint=poQtyMap[sz]>0?poQtyMap[sz]:'';
  const isDefault=sz==='Default';
@@ -5149,20 +5144,11 @@ function buildSizeBreakdownGrid(po, clearValues){
  if(clearBtn)clearBtn.style.display='inline-flex';
  if(totalWrap)totalWrap.style.display='inline-flex';
 
- // Show prev info bar and copy-prev button when previous carton data exists
+ // Hide prev info bar and copy-prev button (no pre-fill on new carton)
  const prevInfoBar=document.getElementById('szBdPrevInfo');
  const copyPrevBtn=document.getElementById('szBdCopyPrevBtn');
- if(clearValues && Object.keys(prevCartonBd).length && _prevCartonNo){
-   if(prevInfoBar){
-     const prevTotal=Object.values(prevCartonBd).reduce((s,v)=>s+(parseInt(v)||0),0);
-     prevInfoBar.textContent='↺ Pre-filled from previous carton: '+_prevCartonNo+' ('+prevTotal+' units) — adjust as needed';
-     prevInfoBar.style.display='block';
-   }
-   if(copyPrevBtn)copyPrevBtn.style.display='inline-flex';
- } else {
-   if(prevInfoBar)prevInfoBar.style.display='none';
-   if(copyPrevBtn)copyPrevBtn.style.display='none';
- }
+ if(prevInfoBar)prevInfoBar.style.display='none';
+ if(copyPrevBtn)copyPrevBtn.style.display='none';
 
  recalcSzBdTotal();
  updateSzBdSessionTotal();
@@ -5776,6 +5762,7 @@ function doBulkScan(){
  const curBulkCartonLog=session.cartonLog&&session.cartonLog.length?session.cartonLog[session.cartonLog.length-1]:null;
  const bulkCartonSzBd=curBulkCartonLog&&curBulkCartonLog.sizeBreakdown?JSON.stringify(curBulkCartonLog.sizeBreakdown):'';
  const normalRecords=[];
+ const notFoundRecords=[];
  const mismatchQueue=[];
  for(const{ean,qty}of parsed){
  const poMatch=poData.find(r=>r.ean===ean&&r.poNo===session.po);
@@ -5796,10 +5783,12 @@ function doBulkScan(){
  status,remark:bulkRemark,mrp:existingMRP?existingMRP.mrp:(session.mrp>0?session.mrp:''),poStatus:'Under Process'
  };
  if(status==='Matched'){normalRecords.push(record);}
- else{mismatchQueue.push(record);} // PO Mismatch AND Not Found both blocked
+ else if(status==='Not Found'){notFoundRecords.push(record);}
+ else{mismatchQueue.push(record);}
  }
  }
 
+ // Save matched records immediately
  for(const rec of normalRecords){
  scannedAll.unshift(rec);
  if(fbConfig)queueScanWrite(rec);
@@ -5813,6 +5802,24 @@ function doBulkScan(){
  }
  clearBulkInput();
 
+ // If there are Not Found records, show ONE single confirmation for the whole batch
+ if(notFoundRecords.length>0){
+ _bulkNFPendingRecords=notFoundRecords;
+ _bulkNFNormalSaved=normalRecords;
+ _bulkNFMismatchQueue=mismatchQueue;
+ _bulkNFBulkRemark=bulkRemark;
+ const qty=notFoundRecords.length;
+ const ean=notFoundRecords[0].ean;
+ const nfOverlay=document.getElementById('bulkNFConfirmOverlay');
+ if(nfOverlay){
+ document.getElementById('bnfEan').textContent=ean;
+ document.getElementById('bnfQty').textContent=qty;
+ document.getElementById('bnfRemark').textContent=bulkRemark||'—';
+ nfOverlay.classList.add('show');
+ }
+ return;
+ }
+
  if(mismatchQueue.length>0){
  _bulkMismatchQueue=[...mismatchQueue];
  _bulkMismatchIndex=0;
@@ -5823,6 +5830,47 @@ function doBulkScan(){
  }
 }
 
+let _bulkNFPendingRecords=[];
+let _bulkNFNormalSaved=[];
+let _bulkNFMismatchQueue=[];
+let _bulkNFBulkRemark='';
+
+function confirmBulkNF(){
+ const nfOverlay=document.getElementById('bulkNFConfirmOverlay');
+ if(nfOverlay)nfOverlay.classList.remove('show');
+ const records=_bulkNFPendingRecords;
+ for(const rec of records){
+ scannedAll.unshift(rec);
+ if(fbConfig)queueScanWrite(rec);
+ incrementScanStats(rec);
+ prependScanRow(rec);
+ }
+ if(records.length){debouncedSaveScanned();fastUpdateStats();fastUpdateScanCounts();}
+ const total=(_bulkNFNormalSaved.length)+records.length;
+ toast('Bulk: '+total+' unit'+(total!==1?'s':'')+' saved'+(records.length?' · '+records.length+' Not Found recorded':'')+(_bulkNFBulkRemark?' · Remark: '+_bulkNFBulkRemark:''),'ok');
+ _triggerBulkMRPPrompts([..._bulkNFNormalSaved,...records]);
+ if(_bulkNFMismatchQueue.length>0){
+ _bulkMismatchQueue=[..._bulkNFMismatchQueue];
+ _bulkMismatchIndex=0;
+ showNextBulkMismatch();
+ }
+ _bulkNFPendingRecords=[];_bulkNFNormalSaved=[];_bulkNFMismatchQueue=[];_bulkNFBulkRemark='';
+}
+
+function cancelBulkNF(){
+ const nfOverlay=document.getElementById('bulkNFConfirmOverlay');
+ if(nfOverlay)nfOverlay.classList.remove('show');
+ const saved=_bulkNFNormalSaved.length;
+ if(saved)toast('Bulk: '+saved+' matched unit'+(saved!==1?'s':'')+' saved · Not Found entry discarded','warn');
+ else toast('Not Found entry cancelled — nothing recorded','warn');
+ if(_bulkNFMismatchQueue.length>0){
+ _bulkMismatchQueue=[..._bulkNFMismatchQueue];
+ _bulkMismatchIndex=0;
+ showNextBulkMismatch();
+ }
+ _bulkNFPendingRecords=[];_bulkNFNormalSaved=[];_bulkNFMismatchQueue=[];_bulkNFBulkRemark='';
+}
+
 let _bulkMismatchQueue=[];
 let _bulkMismatchIndex=0;
 let _bulkCommittedNormal=[];
@@ -5831,7 +5879,7 @@ function showNextBulkMismatch(){
  if(_bulkMismatchIndex>=_bulkMismatchQueue.length){
  const skipped=_bulkMismatchQueue.length;
  const saved=_bulkCommittedNormal.length;
- const msg='Bulk done · '+saved+' saved'+(skipped?' · '+skipped+' blocked (mismatch/not found)':'');
+  const msg='Bulk done · '+saved+' saved'+(skipped?' · '+skipped+' blocked (PO mismatch)':'');
  toast(msg,'ok');
  _triggerBulkMRPPrompts(_bulkCommittedNormal);
  _bulkMismatchQueue=[];_bulkMismatchIndex=0;_bulkCommittedNormal=[];
@@ -11612,6 +11660,27 @@ document.querySelectorAll('.upload-zone').forEach(function(zone){
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeCartonSzEdit()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCartonSzEdit()">💾 Save Breakdown</button>
+    </div>
+  </div>
+</div>
+
+<div class="mismatch-overlay" id="bulkNFConfirmOverlay" style="z-index:460">
+  <div class="mismatch-modal" style="width:420px;max-width:96vw">
+    <div class="mm-icon">❓</div>
+    <div class="mm-title" style="color:var(--orange)">EAN Not Found — Confirm Bulk Entry</div>
+    <div class="mm-sub">This EAN is not in the PO master. Confirm to record all units as Not Found, or Cancel to discard.</div>
+    <div class="mm-detail">
+      <div class="mm-row"><span class="mm-key">EAN / Barcode</span><span class="mm-val" style="font-family:var(--font-mono);color:var(--red)" id="bnfEan">—</span></div>
+      <div class="mm-row"><span class="mm-key">Units to Record</span><span class="mm-val" style="font-family:var(--font-mono);font-size:20px;font-weight:800;color:var(--teal)" id="bnfQty">0</span></div>
+      <div class="mm-row"><span class="mm-key">Remark</span><span class="mm-val" id="bnfRemark" style="color:var(--orange)">—</span></div>
+      <div class="mm-row"><span class="mm-key">Status</span><span class="mm-val" style="color:var(--red);font-weight:700">Not Found</span></div>
+    </div>
+    <div class="mm-warn">⚠ This EAN is not registered in PO master. All units will be recorded as <strong>Not Found</strong>.</div>
+    <div class="mm-actions" style="flex-direction:column;gap:8px">
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="cancelBulkNF()">✕ Cancel — Discard</button>
+        <button class="btn btn-warn" style="flex:1;justify-content:center" onclick="confirmBulkNF()">✓ Confirm — Record All Units</button>
+      </div>
     </div>
   </div>
 </div>
