@@ -3253,6 +3253,23 @@ function _withWriteTimeoutForPath(p,path){
 window.addEventListener('online',()=>{isOnline=true;if(fbConfig)flushQueue();setBanner('connected','✅ Back online · syncing…');});
 window.addEventListener('offline',()=>{isOnline=false;setBanner('offline','📴 Offline — scans saved locally, auto-sync on reconnect');});
 
+// FIX-3: Flush all pending writes before the page closes.
+// debouncedSaveScanned and LS._throttleTimers delay writes for performance,
+// but if the tab/browser is closed during that window, data is lost.
+// This handler cancels pending timers and writes synchronously.
+window.addEventListener('beforeunload',()=>{
+ // Flush throttled localStorage saves
+ clearTimeout(_lsSaveTimer);
+ Object.keys(LS._throttleTimers).forEach(k=>{
+ clearTimeout(LS._throttleTimers[k]);
+ try{localStorage.setItem('grnwms8_'+k,JSON.stringify(
+ k==='scanned'?scannedAll:k==='po'?poData:k==='inward'?inwardData:k==='sto'?stoData:null
+ ));}catch(e){}
+ });
+ // Persist write queue so pending Firebase writes survive a reload
+ try{localStorage.setItem('grnwms8_writeQueue',JSON.stringify(writeQueue));}catch(e){}
+});
+
 function startSSE(){
  if(!fbConfig)return;stopSSE();
  const sseEl=document.getElementById('sseStatus');
@@ -3264,7 +3281,33 @@ function startSSE(){
  if(sseEl){sseEl.textContent='🔴 live';sseEl.style.color='var(--green)';}
  try{
  const d=JSON.parse(e.data);if(!d)return;
+ const sseEventPath=d.path||'/';
  const obj=d.data;
+
+ // FIX-1: Handle individual record path updates (e.g. path="/r1234abc")
+ // These are fired when a table device PATCHes a single scan record to Firebase.
+ // The original handler only handled root "/" events, so individual scans were invisible
+ // to the admin SSE listener until the next full poll.
+ if(sseEventPath!=='/'&&sseEventPath.length>1){
+ const recordId=sseEventPath.replace(/^\//,'');
+ const pendingIds=new Set(writeQueue.filter(w=>w.path&&w.path.startsWith('scanned/')).map(w=>w.path.replace('scanned/','')));
+ if(obj===null){
+ scannedAll=scannedAll.filter(r=>r.id!==recordId);
+ }else if(obj&&typeof obj==='object'&&obj.id){
+ if(!obj.shift||obj.shift==='—')obj.shift=shiftFromTime(obj.time);
+ const ei=scannedAll.findIndex(r=>r.id===recordId);
+ if(ei>=0){if(!pendingIds.has(recordId))scannedAll[ei]=obj;}
+ else{scannedAll.unshift(obj);scannedAll.sort((a,b)=>(b.ts||0)-(a.ts||0));}
+ }
+ LS.save('scanned',scannedAll);lastSyncTs=new Date();updateSyncUI();updateHeaderStats();
+ debouncedSync('adminRefresh',refreshActiveAdminPage,300);
+ if(obj&&obj.tbl){
+ setBanner('connected','🔴 LIVE · new scan from T'+String(obj.tbl).padStart(2,'0'));
+ setTimeout(()=>setBanner('connected','✅ Firebase live · '+scannedAll.length+' scans'),4000);
+ }
+ return;
+ }
+
  if(obj===null){
 
  const _now=Date.now();const _GRACE=5*60*1000;
@@ -6647,7 +6690,11 @@ function commitScanRecord(record){
  document.getElementById('bcInput').value='';
  scannedAll.unshift(record);
 
- debouncedSaveScanned();
+ // FIX-2: Save immediately to localStorage on every single scan.
+ // The previous debouncedSaveScanned() had an 800ms delay — if the device
+ // was closed/refreshed before it fired, the scan record was lost from storage.
+ // Bulk flows (doBulkScan) still use debouncedSaveScanned for performance.
+ try{localStorage.setItem('grnwms8_scanned',JSON.stringify(scannedAll));}catch(e){debouncedSaveScanned();}
  if(fbConfig)queueScanWrite(record);
 
  const box=document.getElementById('scanBox');
