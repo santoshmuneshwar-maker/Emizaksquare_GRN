@@ -1600,6 +1600,12 @@ td.td-ean { font-size: 9.5px; }
 
 
       <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#fff9e0;border:1.5px solid rgba(217,119,6,.25);border-radius:8px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:12px;font-weight:700;color:var(--orange)">🔁 Clear STO Master Data</div><div style="font-size:10px;color:var(--ink3);margin-top:2px">Remove uploaded STO details. Scan records kept.</div></div>
+        <button class="btn btn-warn btn-sm" onclick="clearSTO()">Clear STO</button>
+      </div>
+
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#fff9e0;border:1.5px solid rgba(217,119,6,.25);border-radius:8px;flex-wrap:wrap;gap:8px">
         <div><div style="font-size:12px;font-weight:700;color:var(--orange)">₹ Clear MRP Master</div><div style="font-size:10px;color:var(--ink3);margin-top:2px">Remove all MRP entries. Scan records kept.</div></div>
         <button class="btn btn-warn btn-sm" onclick="clearMRPMasterData()">Clear MRP</button>
       </div>
@@ -3176,7 +3182,12 @@ function delay(ms){return new Promise(r=>setTimeout(r,ms));}
 
 function fetchWithTimeout(url,opts={},ms=12000){
 
- if(opts.body&&typeof opts.body==='string'&&opts.body.length>200000)ms=60000;
+ if(opts.body&&typeof opts.body==='string'){
+ const len=opts.body.length;
+ if(len>2000000)ms=180000;
+ else if(len>500000)ms=120000;
+ else if(len>200000)ms=60000;
+ }
  const ctrl=new AbortController();
  const timer=setTimeout(()=>ctrl.abort(),ms);
  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(timer));
@@ -3188,23 +3199,31 @@ async function fbGet(path){
 async function fbPut(path,data,retries=3){
  if(!fbConfig)return false;const body=JSON.stringify(data);
  for(let i=0;i<retries;i++){
- try{const r=await fetchWithTimeout(fbUrl(path),{method:'PUT',headers:{'Content-Type':'application/json'},body});if(r.ok){lastSyncTs=new Date();updateSyncUI();return true;}if(r.status===401||r.status===403)break;}catch(e){}
+ try{const r=await fetchWithTimeout(fbUrl(path),{method:'PUT',headers:{'Content-Type':'application/json'},body});if(r.ok){lastSyncTs=new Date();updateSyncUI();return true;}if(r.status===401||r.status===403){_onFbPermissionError();break;}}catch(e){}
  if(i<retries-1)await delay(400*Math.pow(2,i));
  }return false;
 }
 async function fbPatch(path,data,retries=3){
  if(!fbConfig)return false;const body=JSON.stringify(data);
  for(let i=0;i<retries;i++){
- try{const r=await fetchWithTimeout(fbUrl(path),{method:'PATCH',headers:{'Content-Type':'application/json'},body});if(r.ok){lastSyncTs=new Date();updateSyncUI();return true;}if(r.status===401||r.status===403)break;}catch(e){}
+ try{const r=await fetchWithTimeout(fbUrl(path),{method:'PATCH',headers:{'Content-Type':'application/json'},body});if(r.ok){lastSyncTs=new Date();updateSyncUI();return true;}if(r.status===401||r.status===403){_onFbPermissionError();break;}}catch(e){}
  if(i<retries-1)await delay(400*Math.pow(2,i));
  }return false;
 }
 async function fbDelete(path,retries=3){
  if(!fbConfig)return false;
  for(let i=0;i<retries;i++){
- try{const r=await fetchWithTimeout(fbUrl(path),{method:'DELETE'});if(r.ok)return true;}catch(e){}
+ try{const r=await fetchWithTimeout(fbUrl(path),{method:'DELETE'});if(r.ok)return true;if(r.status===401||r.status===403){_onFbPermissionError();break;}}catch(e){}
  if(i<retries-1)await delay(400*Math.pow(2,i));
  }return false;
+}
+// surfaces a clear, actionable error instead of leaving writes stuck in the queue silently forever
+function _onFbPermissionError(){
+ const now=Date.now();
+ if(window._lastPermErrToast&&(now-window._lastPermErrToast)<30000)return; // throttle to avoid spamming
+ window._lastPermErrToast=now;
+ setBanner('offline','🔒 Firebase rejected write (401/403) — check Rules in console');
+ if(typeof toast==='function')toast('Sync blocked: Firebase Rules deny write access. Open console → Realtime Database → Rules and set them as shown in setup.','err');
 }
 
 function queueScanWrite(record){
@@ -3237,18 +3256,32 @@ function _withWriteTimeoutForPath(p,path){
  return _withWriteTimeout(p,large?60000:10000);
 }async function flushQueue(){
  if(!fbConfig||!isOnline||writeQueue.length===0)return;
+ if(window._flushInProgress)return; // re-entrancy guard: avoid overlapping flushes duplicating/dropping writes
+ window._flushInProgress=true;
+ try{
  const toFlush=[...writeQueue];let flushed=0;
+ const BATCH=3; // smaller batches avoid cascading timeouts/aborts on slow 2G/3G
 
- for(let i=0;i<toFlush.length;i+=10){
- const batch=toFlush.slice(i,i+10);
+ for(let i=0;i<toFlush.length;i+=BATCH){
+ const batch=toFlush.slice(i,i+BATCH);
  const results=await Promise.all(batch.map(w=>_withWriteTimeoutForPath(w.method==='delete'?fbDelete(w.path):w.method==='patch'?fbPatch(w.path,w.data):fbPut(w.path,w.data),w.path).catch(()=>false)));
- results.forEach((ok,j)=>{if(ok){writeQueue=writeQueue.filter(x=>x.path!==batch[j].path||x.ts!==batch[j].ts);flushed++;}});
+ results.forEach((ok,j)=>{
+  if(ok){
+   const cur=writeQueue.find(x=>x.path===batch[j].path);
+   if(cur&&cur.ts===batch[j].ts)writeQueue=writeQueue.filter(x=>!(x.path===batch[j].path&&x.ts===batch[j].ts));
+   flushed++;
+  }
+ });
  if(flushed>0)updateQueueBadge();
+ if(i+BATCH<toFlush.length)await delay(150);
  }
  LS.save('writeQueue',writeQueue);updateQueueBadge();
  if(writeQueue.length===0)setBanner('connected','✅ Synced · '+scannedAll.length+' records');
  else setBanner('queued','⏳ '+writeQueue.length+' pending — retrying');
  if(flushed>0)updateSyncUI();
+ }finally{
+ window._flushInProgress=false;
+ }
 }
 window.addEventListener('online',()=>{isOnline=true;if(fbConfig)flushQueue();setBanner('connected','✅ Back online · syncing…');});
 window.addEventListener('offline',()=>{isOnline=false;setBanner('offline','📴 Offline — scans saved locally, auto-sync on reconnect');});
@@ -3449,7 +3482,73 @@ async function pullFromFirebase(fullPull=false){
  if(Array.isArray(fbSTO)&&fbSTO.length){stoData=fbSTO;LS.save('sto',stoData);}
  else if(fbSTO&&typeof fbSTO==='object'&&!Array.isArray(fbSTO)){const arr=Object.values(fbSTO).filter(Boolean);if(arr.length){stoData=arr;LS.save('sto',stoData);}}
  }
- if(fbMRP&&typeof fbMRP==='object')mrpMaster=fbMRP,LS.save('mrp',mrpMaster);
+ // Sync shared STO Google Sheet config so table devices can fetch STO directly
+ try{
+ const fbStoCfg=await fbGet('gs_sto_cfg');
+ if(fbStoCfg&&fbStoCfg.url){
+ const localTs=LS.load('gs_sto_cfg_ts',0);
+ if(!localTs||fbStoCfg.ts>localTs){
+ LS.save('gsheet_sto_url',fbStoCfg.url);
+ LS.save('gsheet_sto_sheet',fbStoCfg.sheet||'');
+ LS.save('gs_sto_cfg_ts',fbStoCfg.ts||Date.now());
+ const inp=document.getElementById('gsheet-sto-url');if(inp)inp.value=fbStoCfg.url;
+ const btn=document.getElementById('gsheet-sto-fetch-btn');if(btn)btn.disabled=!fbStoCfg.url;
+ const shInp=document.getElementById('gsheet-sto-sheet');if(shInp)shInp.value=fbStoCfg.sheet||'';
+ if(typeof onGSheetStoSheetInput==='function'&&fbStoCfg.sheet){
+ const tagContainer=document.getElementById('sto-sheet-tags');
+ if(tagContainer){
+ const names=fbStoCfg.sheet.split(',').map(x=>x.trim()).filter(Boolean);
+ tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(124,58,237,.09);color:var(--purple);border:1px solid rgba(124,58,237,.25)">📋 ${n}</span>`).join('');
+ }
+ }
+ }
+ }
+ }catch(e){}
+ // Sync shared Inward Google Sheet (Sheet 1) config
+ try{
+ const fbInwCfg=await fbGet('gs_inward_cfg');
+ if(fbInwCfg&&fbInwCfg.url){
+ const localTs=LS.load('gs_inward_cfg_ts',0);
+ if(!localTs||fbInwCfg.ts>localTs){
+ LS.save('gsheet_inward_url',fbInwCfg.url);
+ LS.save('gsheet_inward_sheet',fbInwCfg.sheet||'');
+ LS.save('gs_inward_cfg_ts',fbInwCfg.ts||Date.now());
+ const inp=document.getElementById('gsheet-inward-url');if(inp)inp.value=fbInwCfg.url;
+ const btn=document.getElementById('gsheet-fetch-btn');if(btn)btn.disabled=!fbInwCfg.url;
+ const shInp=document.getElementById('gsheet-inward-sheet');if(shInp)shInp.value=fbInwCfg.sheet||'';
+ const tagContainer=document.getElementById('gs-sheet-tags');
+ if(tagContainer&&fbInwCfg.sheet){
+ const names=fbInwCfg.sheet.split(',').map(x=>x.trim()).filter(Boolean);
+ tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(8,145,178,.09);color:var(--teal);border:1px solid rgba(8,145,178,.25)">📋 ${n}</span>`).join('');
+ }
+ const hint=document.getElementById('gs-sheet-hint');
+ const hintName=document.getElementById('gs-sheet-hint-name');
+ if(hint&&hintName&&fbInwCfg.sheet){hint.style.display='block';hintName.textContent=fbInwCfg.sheet;}
+ if(fbInwCfg.url&&typeof _startGSheetLiveSync==='function'){_gsLastHash='';_startGSheetLiveSync();}
+ }
+ }
+ }catch(e){}
+ // Sync shared Inward Google Sheet (Sheet 2) config
+ try{
+ const fbInw2Cfg=await fbGet('gs_inward2_cfg');
+ if(fbInw2Cfg&&fbInw2Cfg.url){
+ const localTs=LS.load('gs_inward2_cfg_ts',0);
+ if(!localTs||fbInw2Cfg.ts>localTs){
+ LS.save('gsheet2_inward_url',fbInw2Cfg.url);
+ LS.save('gsheet2_inward_sheet',fbInw2Cfg.sheet||'');
+ LS.save('gs_inward2_cfg_ts',fbInw2Cfg.ts||Date.now());
+ const inp=document.getElementById('gsheet2-inward-url');if(inp)inp.value=fbInw2Cfg.url;
+ const btn=document.getElementById('gsheet2-fetch-btn');if(btn)btn.disabled=!fbInw2Cfg.url;
+ const shInp=document.getElementById('gsheet2-inward-sheet');if(shInp)shInp.value=fbInw2Cfg.sheet||'';
+ const tagContainer=document.getElementById('gs2-sheet-tags');
+ if(tagContainer&&fbInw2Cfg.sheet){
+ const names=fbInw2Cfg.sheet.split(',').map(x=>x.trim()).filter(Boolean);
+ tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(8,145,178,.09);color:var(--teal);border:1px solid rgba(8,145,178,.25)">📋 ${n}</span>`).join('');
+ }
+ if(fbInw2Cfg.url&&typeof _startGSheet2LiveSync==='function'){_gs2LastHash='';_startGSheet2LiveSync();}
+ }
+ }
+ }catch(e){}
  if(fbPINs&&typeof fbPINs==='object')tablePINs=fbPINs,LS.save('tablePINs',tablePINs);
  if(fbCreds&&fbCreds.u){adminCredentials={username:fbCreds.u,password:fbCreds.p};LS.save('adminCreds',adminCredentials);}
  }
@@ -3612,7 +3711,7 @@ function startPOMetaPoll(){
  stopPOMetaPoll();
  if(!fbConfig)return;
  checkPOMeta();
- poMetaTimer=setInterval(checkPOMeta,30000);
+ poMetaTimer=setInterval(checkPOMeta,12000);
 }
 function stopPOMetaPoll(){if(poMetaTimer){clearInterval(poMetaTimer);poMetaTimer=null;}}
 
@@ -3640,7 +3739,7 @@ async function checkPOMeta(){
  if(!isAdminOrigin){
 
  let fbPO=null;
- const delays=[2000,4000,8000,16000,30000];
+ const delays=[2000,4000,8000,15000,20000,30000,30000,30000];
  for(let attempt=0;attempt<=delays.length;attempt++){
  fbPO=await fbGet('po');
  const hasData=Array.isArray(fbPO)?fbPO.length>0:(fbPO&&typeof fbPO==='object'&&Object.keys(fbPO).length>0);
@@ -3649,6 +3748,15 @@ async function checkPOMeta(){
  setBanner('connecting','⏳ Waiting for PO data… (attempt '+(attempt+1)+')');
  await new Promise(r=>setTimeout(r,delays[attempt]));
  }
+ }
+ const hasFinalData=Array.isArray(fbPO)?fbPO.length>0:(fbPO&&typeof fbPO==='object'&&Object.keys(fbPO).length>0);
+ if(!hasFinalData){
+ // Large PO upload likely still being written by admin — don't mark as consumed,
+ // recheck shortly so the same po_meta event isn't missed permanently.
+ setBanner('queued','⏳ PO data not yet available — will retry shortly');
+ lastKnownPoMetaTs=meta.ts-1;
+ setTimeout(checkPOMeta,15000);
+ return;
  }
  if(Array.isArray(fbPO)&&fbPO.length){poData=fbPO;}
  else if(fbPO&&typeof fbPO==='object'&&!Array.isArray(fbPO)){const arr=Object.values(fbPO).filter(Boolean);if(arr.length)poData=arr;}
@@ -4213,13 +4321,17 @@ function confirmUpload(){
 
  if(!session){const selPO=document.getElementById('selPO');if(selPO&&selPO.value.trim())onPOChange();}
  if(fbConfig){
- fbPut('po_meta',{status:'set',ts:Date.now(),fname,count:poData.length,uploadedBy:currentUser&&currentUser.username?currentUser.username:'admin'});
  window._poUploadPending=true;
  queueWrite('po',poData);
  const _guardTs=Date.now();
  const _checkGuard=setInterval(()=>{
  const stillQueued=writeQueue.some(w=>w.path==='po');
- if(!stillQueued||Date.now()-_guardTs>90000){window._poUploadPending=false;clearInterval(_checkGuard);}
+ if(!stillQueued||Date.now()-_guardTs>90000){
+ window._poUploadPending=false;clearInterval(_checkGuard);
+ // Notify other tables only once the bulk PO data has actually landed in Firebase
+ // (or after the 90s guard window), so they don't poll for data that isn't there yet.
+ fbPut('po_meta',{status:'set',ts:Date.now(),fname,count:poData.length,uploadedBy:currentUser&&currentUser.username?currentUser.username:'admin'});
+ }
  },2000);
  }
  }else if(type==='inward'){
@@ -4404,6 +4516,16 @@ function clearPO(){
  refreshPODropdown();updateHeaderStats();
  toast('PO data cleared','warn');
 }
+function clearSTO(){
+ stoData=[];
+ LS.remove('sto');LS.save('sto_cleared',true);
+ if(fbConfig){
+ fbDelete('sto');
+ fbPut('sto_meta',{status:'cleared',ts:Date.now(),clearedBy:currentUser&&currentUser.username?currentUser.username:'admin'});
+ }
+ updateHeaderStats();
+ toast('STO data cleared','warn');
+}
 function clearInward(){
  inwardData=[];
  LS.remove('inward');LS.remove('inward_fname');
@@ -4436,6 +4558,7 @@ function onGSheetUrlInput(){
  }else{
  LS.remove('gsheet_inward_url');
  }
+ if(fbConfig){const _ts=Date.now();LS.save('gs_inward_cfg_ts',_ts);queueWrite('gs_inward_cfg',{url,sheet:LS.load('gsheet_inward_sheet',''),ts:_ts});}
 }
 
 function onGSheetSheetInput(){
@@ -4450,6 +4573,7 @@ function onGSheetSheetInput(){
  const names=sh.split(',').map(s=>s.trim()).filter(Boolean);
  tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(8,145,178,.09);color:var(--teal);border:1px solid rgba(8,145,178,.25)">📋 ${n}</span>`).join('');
  }
+ if(fbConfig){const _ts=Date.now();LS.save('gs_inward_cfg_ts',_ts);queueWrite('gs_inward_cfg',{url:LS.load('gsheet_inward_url',''),sheet:sh,ts:_ts});}
 }
 
 function saveGsColOverrides(){
@@ -4831,6 +4955,7 @@ function onGSheet2UrlInput(){
  }else{
  LS.remove('gsheet2_inward_url');
  }
+ if(fbConfig){const _ts=Date.now();LS.save('gs_inward2_cfg_ts',_ts);queueWrite('gs_inward2_cfg',{url,sheet:LS.load('gsheet2_inward_sheet',''),ts:_ts});}
 }
 
 function onGSheet2SheetInput(){
@@ -4841,6 +4966,7 @@ function onGSheet2SheetInput(){
  const names=sh.split(',').map(s=>s.trim()).filter(Boolean);
  tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(8,145,178,.09);color:var(--teal);border:1px solid rgba(8,145,178,.25)">📋 ${n}</span>`).join('');
  }
+ if(fbConfig){const _ts=Date.now();LS.save('gs_inward2_cfg_ts',_ts);queueWrite('gs_inward2_cfg',{url:LS.load('gsheet2_inward_url',''),sheet:sh,ts:_ts});}
 }
 
 function setGSheet2Status(msg,type){
@@ -5141,6 +5267,7 @@ function onGSheetStoUrlInput(){
  const url=(document.getElementById('gsheet-sto-url').value||'').trim();
  document.getElementById('gsheet-sto-fetch-btn').disabled=!url;
  if(url)LS.save('gsheet_sto_url',url);else LS.remove('gsheet_sto_url');
+ if(fbConfig){const _ts=Date.now();LS.save('gs_sto_cfg_ts',_ts);queueWrite('gs_sto_cfg',{url,sheet:LS.load('gsheet_sto_sheet',''),ts:_ts});}
 }
 function onGSheetStoSheetInput(){
  const sh=(document.getElementById('gsheet-sto-sheet').value||'').trim();
@@ -5148,6 +5275,7 @@ function onGSheetStoSheetInput(){
  const names=sh?sh.split(',').map(x=>x.trim()).filter(Boolean):[];
  const tagContainer=document.getElementById('sto-sheet-tags');
  if(tagContainer)tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(124,58,237,.09);color:var(--purple);border:1px solid rgba(124,58,237,.25)">📋 ${n}</span>`).join('');
+ if(fbConfig){const _ts=Date.now();LS.save('gs_sto_cfg_ts',_ts);queueWrite('gs_sto_cfg',{url:LS.load('gsheet_sto_url',''),sheet:sh,ts:_ts});}
 }
 function _stoStatusMsg(msg,ok){
  const el=document.getElementById('gsheet-sto-status');
@@ -7720,9 +7848,8 @@ function exportSelectedPO(){
  poRecs.forEach(r=>{
  const sz=(r.size||'—').trim();
 
- const isWrongBarcode=(r.remark||'').trim()==='Wrong Barcode';
  const isPOMismatch=r.status==='PO Mismatch';
- const eanKey=isWrongBarcode?'__WRONG_BC__':(r.ean||'');
+ const eanKey=r.ean||'';
  // PO Mismatch records: key without skuCode/skuDesc so they merge into the same row as matched scans of the same EAN+carton
  const key=isPOMismatch
    ?[r.date,r.poNo,r.tbl,r.carton,eanKey,sz].join('||')
@@ -9215,11 +9342,9 @@ function renderGRNDash(){
  // tatList: all invoices — _gdTAT() handles pending/within/above based on grnStatus + date diff
  const tatList=invList;
 
- const withinRaw=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
- const within=withinRaw;
- const above=(uQty>=30000&&withinRaw>=30000)?0:aboveRaw;
+ const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+ // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
  const tatTotal=above+within;
  const abovePct=tatTotal>0?((above/tatTotal)*100).toFixed(2)+'%':'0.00%';
  const withinPct=tatTotal>0?((within/tatTotal)*100).toFixed(2)+'%':'0.00%';
@@ -9446,10 +9571,9 @@ function exportGRNDash(){
  const beyond=beyondQty;
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
- const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
- // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
- const above=(uQty>=30000&&within>=30000)?0:aboveRaw;
+ // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
  const t=above+within;
  return[date,uInv,uBoxes,uQty,dInv,dBoxes,dQty,upInv,upBoxes,upQty,iInv,iBoxes,iQty,pInv,pBoxes,pQty,beyond,above,within,t>0?((above/t)*100).toFixed(2)+'%':'0.00%',t>0?((within/t)*100).toFixed(2)+'%':'0.00%'];
  });
@@ -9505,10 +9629,9 @@ function exportGRNDashExcel(){
  const beyond=beyondQty;
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
- const aboveRaw=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(wcQty[i.id]||0),0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
- // Business rule: if Total Invoice Qty >= 30000 AND Within TAT Qty >= 30000, Above TAT = 0
- const above=(uQty>=30000&&within>=30000)?0:aboveRaw;
+ // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
  const t=above+within;
  const abovePct=t>0?(above/t)*100:0;
  const withinPct=t>0?(within/t)*100:0;
@@ -9835,11 +9958,10 @@ function exportCombinedDashImage(){
  il.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=il;
- const rawAbove=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const rawWithin=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- let above,within;
- if(uQty>=DAILY_CAP){if(rawWithin>=DAILY_CAP){within=DAILY_CAP;above=0;}else{within=rawWithin;above=Math.min(rawAbove,DAILY_CAP-rawWithin);}}
- else{above=rawAbove;within=rawWithin;}
+ // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ const within=rawWithin;
+ const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within);
  T.uInv+=uInv;T.uBoxes+=uBoxes;T.uQty+=uQty;T.dInv+=dInv;T.dQty+=dQty;T.upInv+=upInv;T.upQty+=upQty;T.iInv+=iInv;T.iQty+=iQty;T.above+=above;T.within+=within;T.bc+=bcQty;
  const t2=above+within;
  return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty,wPct:t2>0?((within/t2)*100).toFixed(1)+'%':'—',aPct:t2>0?((above/t2)*100).toFixed(1)+'%':'—',dPct:uInv>0?((dInv/uInv)*100).toFixed(0)+'%':'—'};
@@ -10837,13 +10959,10 @@ function exportGRNDashImage(){
 
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList;
- const rawAboveJ=tatList.filter(i=>_gdTAT(i)==='above').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const rawWithinJ=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- let above,within;
- if(uQty>=DAILY_CAP){
- if(rawWithinJ>=DAILY_CAP){within=DAILY_CAP;above=0;}
- else{within=rawWithinJ;above=Math.min(rawAboveJ,DAILY_CAP-rawWithinJ);}
- }else{above=rawAboveJ;within=rawWithinJ;}
+ // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ const within=rawWithinJ;
+ const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within);
  return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty};
  });
 
