@@ -1682,6 +1682,18 @@ td.td-ean { font-size: 9.5px; }
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <div>
 
+          <div id="gsheet-apikey-box" style="margin-bottom:10px;padding:9px 12px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid rgba(217,119,6,.35);border-radius:8px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:800;color:#b45309">&#x1F511; Google API Key</span>
+              <span style="font-size:9px;color:var(--ink3)">(one key is used by all 3 sheet sources below)</span>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center">
+              <input class="field-input" id="gsheet-api-key" type="password" placeholder="Paste your Google API Key (AIza&#x2026;)" style="flex:1;font-size:10px;padding:7px 10px;font-family:var(--font-mono)" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetApiKeyInput()">
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px" onclick="var i=document.getElementById('gsheet-api-key');i.type=(i.type==='password'?'text':'password');this.textContent=(i.type==='password'?'Show':'Hide')">Show</button>
+            </div>
+            <div style="font-size:9px;color:var(--ink3);margin-top:5px;line-height:1.6">Need one? See <b>&#x2460; SETUP</b> tab below. Sheet must be shared as <b>&quot;Anyone with the link &#x2192; Viewer&quot;</b>.</div>
+          </div>
+
           <details style="margin-bottom:10px">
             <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:7px;padding:8px 12px;background:linear-gradient(135deg,#f0fdf4,#f0fdff);border:1.5px solid rgba(5,150,105,.25);border-radius:8px;font-size:11px;font-weight:800;color:var(--green);user-select:none">
               <span>🔗</span> Link Google Sheet
@@ -1696,84 +1708,29 @@ td.td-ean { font-size: 9.5px; }
             </div>
 
             <div style="display:flex;gap:3px;margin-bottom:10px;background:rgba(0,0,0,.05);border-radius:7px;padding:3px">
-              <div id="gs-tab-1" onclick="gsShowTab(1)" style="flex:1;text-align:center;font-size:9px;font-weight:800;padding:5px 4px;border-radius:5px;cursor:pointer;background:#fff;color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,.1)">&#x2460; SETUP SCRIPT</div>
+              <div id="gs-tab-1" onclick="gsShowTab(1)" style="flex:1;text-align:center;font-size:9px;font-weight:800;padding:5px 4px;border-radius:5px;cursor:pointer;background:#fff;color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,.1)">&#x2460; SETUP</div>
               <div id="gs-tab-2" onclick="gsShowTab(2)" style="flex:1;text-align:center;font-size:9px;font-weight:800;padding:5px 4px;border-radius:5px;cursor:pointer;color:var(--ink3)">&#x2461; FETCH DATA</div>
             </div>
 
             <div id="gs-panel-1">
               <div style="font-size:10px;color:var(--ink2);line-height:1.8;margin-bottom:8px">
-                Browsers block direct Google Sheets access (CORS).<br>A <b>Google Apps Script</b> relay solves this in 2 min:
+                Data is fetched directly with the <b>Google Sheets API</b> &mdash; no Apps Script needed. One-time setup (about 2 min):
               </div>
               <div style="font-size:10px;color:var(--ink2);line-height:2;margin-bottom:8px">
-                <b style="color:var(--accent)">1.</b> Open your Google Sheet &#x2192; <b>Extensions &#x2192; Apps Script</b><br>
-                <b style="color:var(--accent)">2.</b> Delete all existing code and paste the code below<br>
-                <b style="color:var(--accent)">3.</b> Click <b>Deploy &#x2192; New deployment &#x2192; Web app</b><br>
-                <b style="color:var(--accent)">4.</b> Set <b>Execute as: Me</b> &amp; <b>Who has access: Anyone</b><br>
-                <b style="color:var(--accent)">5.</b> Click <b>Deploy</b>, copy the Web App URL, go to tab &#x2461;
+                <b style="color:var(--accent)">1.</b> Open <b>console.cloud.google.com</b> &rarr; create / select a project<br>
+                <b style="color:var(--accent)">2.</b> <b>APIs &amp; Services &rarr; Library</b> &rarr; enable <b>Google Sheets API</b><br>
+                <b style="color:var(--accent)">3.</b> <b>APIs &amp; Services &rarr; Credentials &rarr; Create credentials &rarr; API key</b><br>
+                <b style="color:var(--accent)">4.</b> (Recommended) Restrict the key to <b>Google Sheets API</b> only<br>
+                <b style="color:var(--accent)">5.</b> Paste the key in the <b>&#x1F511; Google API Key</b> box above<br>
+                <b style="color:var(--accent)">6.</b> In your sheet: <b>Share &rarr; General access &rarr; Anyone with the link &rarr; Viewer</b><br>
+                <b style="color:var(--accent)">7.</b> Go to tab &#x2461;, paste the <b>Sheet URL (or ID)</b>, enter the tab name(s), click <b>Fetch</b>
               </div>
-              <div style="position:relative">
-                <pre id="gs-script-code" style="background:#0d1117;border-radius:8px;padding:10px 12px;font-size:10px;color:#7ee787;line-height:1.6;overflow-x:auto;white-space:pre;margin:0">function doGet(e){
-  var ss=SpreadsheetApp.getActiveSpreadsheet();
-  var sheetParam=e&amp;&amp;e.parameter&amp;&amp;e.parameter.sheet?e.parameter.sheet:'';
-  var action=e&amp;&amp;e.parameter&amp;&amp;e.parameter.action?e.parameter.action:'data';
-
-  var sheetNames=sheetParam?sheetParam.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
-  var sheets=sheetNames.length
-    ? sheetNames.map(function(n){return ss.getSheetByName(n);}).filter(Boolean)
-    : [ss.getActiveSheet()];
-
-  if(!sheets.length){
-    var avail=ss.getSheets().map(function(s){return s.getName();}).join(', ');
-    var out=ContentService.createTextOutput(JSON.stringify({error:'None of the requested sheets found. Available: '+avail}));
-    out.setMimeType(ContentService.MimeType.JSON);return out;
-  }
-
-  if(action==='hash'){
-    var hashParts=[];
-    sheets.forEach(function(sh){
-      var vals=sh.getDataRange().getValues();
-      var rowCount=vals.length-1;
-      var tail='';var start=Math.max(1,vals.length-3);
-      for(var i=start;i&lt;vals.length;i++)tail+=vals[i].join('|');
-      hashParts.push(sh.getName()+':'+rowCount+':'+tail.length+':'+tail.slice(0,80));
-    });
-    var out=ContentService.createTextOutput(JSON.stringify({hash:hashParts.join('||'),rows:hashParts.length,ts:Date.now()}));
-    out.setMimeType(ContentService.MimeType.JSON);return out;
-  }
-
-  var allRows=[];
-  sheets.forEach(function(sh){
-    var range=sh.getDataRange();
-    var data=range.getValues();
-    var disp=range.getDisplayValues();
-    var headers=data[0];
-    var poIdx=-1,invIdx=-1;
-    for(var j=0;j&lt;headers.length;j++){
-      var h=String(headers[j]).toLowerCase().replace(/[\s._-]+/g,'');
-      if(h==='pono'||h==='ponumber'||h==='purchaseorderno'||h==='po')poIdx=j;
-      if(h==='invoiceno'||h==='invno'||h==='invoicenumber'||h==='invoice#'||h==='inv#')invIdx=j;
-    }
-    for(var i=1;i&lt;data.length;i++){
-      if(!data[i][0]&amp;&amp;!data[i][1])continue;
-      var row={_sourceSheet:sh.getName()};
-      for(var j=0;j&lt;headers.length;j++){
-        row[headers[j]]=(j===poIdx||j===invIdx)?disp[i][j]:data[i][j];
-      }
-      allRows.push(row);
-    }
-  });
-  var out=ContentService.createTextOutput(JSON.stringify({sheets:sheets.map(function(s){return s.getName();}),data:allRows}));
-  out.setMimeType(ContentService.MimeType.JSON);
-  return out;
-}</pre>
-                <button onclick="copyGsCode()" id="gs-copy-btn" style="position:absolute;top:6px;right:6px;background:rgba(255,255,255,.12);color:#cdd9e5;border:1px solid rgba(255,255,255,.2);border-radius:5px;font-size:9px;font-weight:700;padding:3px 8px;cursor:pointer">&#x1F4CB; Copy</button>
-              </div>
-              <button class="btn btn-primary btn-sm" onclick="gsShowTab(2)" style="width:100%;justify-content:center;margin-top:10px">Next: Paste Web App URL &#x2192;</button>
+              <button class="btn btn-primary btn-sm" onclick="gsShowTab(2)" style="width:100%;justify-content:center;margin-top:10px">Next: Paste Sheet URL &#x2192;</button>
             </div>
 
             <div id="gs-panel-2" style="display:none">
-              <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Paste the <strong style="color:var(--ink2)">Web App URL</strong> from your Apps Script deployment:</div>
-              <input class="field-input" id="gsheet-inward-url" placeholder="https://script.google.com/macros/s/&#x2026;/exec" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetUrlInput()">
+              <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Paste the <strong style="color:var(--ink2)">Google Sheet URL</strong> (or just the Spreadsheet ID):</div>
+              <input class="field-input" id="gsheet-inward-url" placeholder="Google Sheet URL or Spreadsheet ID" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetUrlInput()">
 
               <div style="margin-bottom:8px">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
@@ -1841,8 +1798,8 @@ td.td-ean { font-size: 9.5px; }
               <span style="font-size:9px;color:var(--ink3);margin-left:auto;font-weight:400">(merges with Sheet 1) ▸</span>
             </summary>
           <div style="margin-top:6px;padding:11px 13px;background:linear-gradient(135deg,#f0fdf4,#f0fdff);border:1.5px solid rgba(8,145,178,.25);border-radius:var(--r)">
-            <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Connect a second Apps Script Web App URL. Its rows will be merged into the same inward register (duplicate Invoice Nos. are updated, unique ones are added).</div>
-            <input class="field-input" id="gsheet2-inward-url" placeholder="https://script.google.com/macros/s/…/exec  (Sheet 2)" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheet2UrlInput()">
+            <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Connect a second Google Sheet (URL or Spreadsheet ID). Its rows will be merged into the same inward register (duplicate Invoice Nos. are updated, unique ones are added).</div>
+            <input class="field-input" id="gsheet2-inward-url" placeholder="Google Sheet URL or Spreadsheet ID  (Sheet 2)" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheet2UrlInput()">
             <div style="margin-bottom:6px">
               <div style="font-size:9px;color:var(--ink3);margin-bottom:4px;font-weight:700">📋 Worksheets/Tabs (comma-separated, blank = active sheet):</div>
               <input class="field-input" id="gsheet2-inward-sheet" placeholder="e.g. GRN Register, May 2026" style="width:100%;font-size:10px;padding:5px 9px;font-family:var(--font-mono)" autocomplete="off" spellcheck="false" oninput="onGSheet2SheetInput()">
@@ -1870,8 +1827,8 @@ td.td-ean { font-size: 9.5px; }
               <span style="font-size:9px;color:var(--ink3);margin-left:auto;font-weight:400">(Stock Transfer Order) ▸</span>
             </summary>
           <div style="margin-top:6px;padding:11px 13px;background:linear-gradient(135deg,#fdf4ff,#faf0ff);border:1.5px solid rgba(124,58,237,.25);border-radius:var(--r)">
-            <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Connect an Apps Script Web App URL for your STO register. STO data powers the <strong>STO Status</strong> tab.</div>
-            <input class="field-input" id="gsheet-sto-url" placeholder="https://script.google.com/macros/s/…/exec  (STO Sheet)" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetStoUrlInput()">
+            <div style="font-size:10px;color:var(--ink3);margin-bottom:7px;line-height:1.6">Connect a Google Sheet (URL or Spreadsheet ID) for your STO register. STO data powers the <strong>STO Status</strong> tab.</div>
+            <input class="field-input" id="gsheet-sto-url" placeholder="Google Sheet URL or Spreadsheet ID  (STO Sheet)" style="width:100%;font-size:10px;padding:7px 10px;font-family:var(--font-mono);margin-bottom:6px" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="onGSheetStoUrlInput()">
             <div style="margin-bottom:6px">
               <div style="font-size:9px;color:var(--ink3);margin-bottom:4px;font-weight:700">📋 Worksheets/Tabs (comma-separated, blank = active sheet):</div>
               <input class="field-input" id="gsheet-sto-sheet" placeholder="e.g. STO Register, May 2026" style="width:100%;font-size:10px;padding:5px 9px;font-family:var(--font-mono)" autocomplete="off" spellcheck="false" oninput="onGSheetStoSheetInput()">
@@ -1880,6 +1837,7 @@ td.td-ean { font-size: 9.5px; }
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px">
               <button class="btn btn-mrp btn-sm" id="gsheet-sto-fetch-btn" onclick="fetchGSheetSto()" disabled style="flex:1;justify-content:center">⬇ Fetch STO Sheet</button>
               <button class="btn btn-ghost btn-sm" onclick="debugGSheetStoCols()" style="font-size:10px;white-space:nowrap" title="Show raw column names from STO Sheet">🔍 Debug Cols</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSTOSheetData()" style="font-size:10px;white-space:nowrap;color:var(--red)" title="Clear STO data fetched from Google Sheet">🗑 Clear STO Sheet Data</button>
             </div>
 
             <div id="sto-livesync-strip" style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:7px;flex-wrap:wrap">
@@ -3192,6 +3150,111 @@ function fetchWithTimeout(url,opts={},ms=12000){
  const timer=setTimeout(()=>ctrl.abort(),ms);
  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(timer));
 }
+
+// ===================== Google Sheets API v4 (API key) =====================
+// Replaces the old Apps Script Web App fetching. No deployment needed —
+// just an API key (Google Cloud Console → enable "Google Sheets API" → Credentials → API key)
+// and the sheet shared as "Anyone with the link can view".
+
+function extractSheetId(raw){
+ // Accepts either a bare Spreadsheet ID or a full Google Sheets URL and returns the ID.
+ if(!raw)return '';
+ const s=String(raw).trim();
+ const m=s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+ return m?m[1]:s;
+}
+
+function gsApiKey(){return LS.load('gsheet_api_key','').trim();}
+
+async function _sheetsApiGetTabNames(spreadsheetId,apiKey){
+ const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId)
+ +'?key='+encodeURIComponent(apiKey)+'&fields='+encodeURIComponent('sheets.properties.title');
+ const resp=await fetchWithTimeout(url,{cache:'no-cache'},15000);
+ if(!resp.ok){
+ let detail='HTTP '+resp.status;
+ try{const j=await resp.json();if(j&&j.error&&j.error.message)detail=j.error.message;}catch(e){}
+ throw new Error(detail+' — check the Spreadsheet ID, API key, and that the sheet is shared as "Anyone with the link"');
+ }
+ const json=await resp.json();
+ const titles=(json.sheets||[]).map(s=>s.properties&&s.properties.title).filter(Boolean);
+ if(!titles.length)throw new Error('No worksheet tabs found — check the Spreadsheet ID');
+ return titles;
+}
+
+// Fetches one or more worksheet tabs via values:batchGet and returns
+// { sheetName: [ {header:value,...}, ... ], ... }
+// Pass sheetNames=null/[] to auto-use the first tab in the spreadsheet.
+async function sheetsApiV4BatchGet(spreadsheetId,apiKey,sheetNames){
+ if(!spreadsheetId)throw new Error('Missing Spreadsheet ID');
+ if(!apiKey)throw new Error('Missing Google API Key — paste one in the API Key field above');
+ let names=(sheetNames&&sheetNames.length)?sheetNames:null;
+ if(!names){
+ const all=await _sheetsApiGetTabNames(spreadsheetId,apiKey);
+ names=[all[0]];
+ }
+ const rangeParams=names.map(n=>'ranges='+encodeURIComponent(n)).join('&');
+ const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId)
+ +'/values:batchGet?'+rangeParams+'&valueRenderOption=UNFORMATTED_VALUE&key='+encodeURIComponent(apiKey);
+ const resp=await fetchWithTimeout(url,{cache:'no-cache'},15000);
+ if(!resp.ok){
+ let detail='HTTP '+resp.status;
+ try{const j=await resp.json();if(j&&j.error&&j.error.message)detail=j.error.message;}catch(e){}
+ throw new Error(detail+' — check the Spreadsheet ID, tab name, API key, and sharing settings');
+ }
+ const json=await resp.json();
+ const out={};
+ (json.valueRanges||[]).forEach((vr,i)=>{
+ const name=names[i];
+ const values=vr.values||[];
+ if(!values.length){out[name]=[];return;}
+ const headers=values[0].map(h=>String(h==null?'':h).trim());
+ const rows=values.slice(1)
+ .filter(r=>r&&r.some(c=>c!==undefined&&c!==null&&String(c).trim()!==''))
+ .map(r=>{
+ const obj={};
+ headers.forEach((h,ci)=>{if(h)obj[h]=(r[ci]===undefined||r[ci]===null)?'':r[ci];});
+ return obj;
+ });
+ out[name]=rows;
+ });
+ return out;
+}
+
+// Convenience wrapper: given LS keys for the spreadsheet id and the tab-names field,
+// returns a flat array of row objects tagged with _sourceSheet.
+async function sheetsApiFetchRows(idLsKey,sheetLsKey){
+ const spreadsheetId=extractSheetId(LS.load(idLsKey,''));
+ const apiKey=gsApiKey();
+ const savedSheetInput=LS.load(sheetLsKey,'')||'';
+ const names=savedSheetInput?savedSheetInput.split(',').map(s=>s.trim()).filter(Boolean):null;
+ const rowsBySheet=await sheetsApiV4BatchGet(spreadsheetId,apiKey,names);
+ let allRows=[];
+ const fetchLog=[];
+ Object.keys(rowsBySheet).forEach(sn=>{
+ const rows=rowsBySheet[sn];
+ fetchLog.push((rows.length?'✓ ':'⚠ ')+sn+': '+rows.length+' rows');
+ allRows=allRows.concat(rows.map(r=>({...r,_sourceSheet:sn})));
+ });
+ return {allRows,fetchLog,names:Object.keys(rowsBySheet)};
+}
+
+function onGSheetApiKeyInput(){
+ const key=(document.getElementById('gsheet-api-key').value||'').trim();
+ if(key)LS.save('gsheet_api_key',key);else LS.remove('gsheet_api_key');
+ if(typeof fbConfig!=='undefined'&&fbConfig){const _ts=Date.now();LS.save('gs_api_key_ts',_ts);queueWrite('gs_api_key_cfg',{key,ts:_ts});}
+ ['gsheet-fetch-btn','gsheet2-fetch-btn','gsheet-sto-fetch-btn'].forEach(id=>{
+ const btn=document.getElementById(id);
+ const urlField=id==='gsheet-fetch-btn'?'gsheet-inward-url':(id==='gsheet2-fetch-btn'?'gsheet2-inward-url':'gsheet-sto-url');
+ const urlEl=document.getElementById(urlField);
+ if(btn&&urlEl)btn.disabled=!(key&&urlEl.value.trim());
+ });
+}
+function restoreGSheetApiKey(){
+ const key=LS.load('gsheet_api_key','');
+ if(key){const inp=document.getElementById('gsheet-api-key');if(inp)inp.value=key;}
+}
+// ===================== end Google Sheets API v4 helpers =====================
+
 async function fbGet(path){
  if(!fbConfig)return null;
  try{const r=await fetchWithTimeout(fbUrl(path));if(!r.ok)return null;return await r.json();}catch(e){return null;}
@@ -3334,7 +3397,7 @@ function startSSE(){
  }
  LS.save('scanned',scannedAll);lastSyncTs=new Date();updateSyncUI();updateHeaderStats();
  debouncedSync('adminRefresh',refreshActiveAdminPage,300);
- if(obj&&obj.tbl){
+ if(obj&&obj.tbl&&obj.tbl!=='undefined'){
  setBanner('connected','🔴 LIVE · new scan from T'+String(obj.tbl).padStart(2,'0'));
  setTimeout(()=>setBanner('connected','✅ Firebase live · '+scannedAll.length+' scans'),4000);
  }
@@ -3379,8 +3442,9 @@ function startSSE(){
  LS.save('scanned',scannedAll);lastSyncTs=new Date();updateSyncUI();updateHeaderStats();
  debouncedSync('adminRefresh',refreshActiveAdminPage,300);
  if(newRecs.length){
- const tbls=[...new Set(newRecs.map(r=>r.tbl))];
- setBanner('connected','🔴 LIVE · '+newRecs.length+' new scan(s) from T'+tbls.map(t=>String(t).padStart(2,'0')).join(', T'));
+ const tbls=[...new Set(newRecs.map(r=>r.tbl).filter(t=>t&&t!=='undefined'))];
+ if(tbls.length)setBanner('connected','🔴 LIVE · '+newRecs.length+' new scan(s) from T'+tbls.map(t=>String(t).padStart(2,'0')).join(', T'));
+ else setBanner('connected','🔴 LIVE · '+newRecs.length+' new scan(s)');
  setTimeout(()=>setBanner('connected','✅ Firebase live · '+scannedAll.length+' scans'),4000);
  }
  }catch(err){}
@@ -3405,7 +3469,11 @@ function _mergeFirebaseScans(fbObj){
 
  const merged={};
 
- Object.entries(fbObj||{}).forEach(([id,val])=>{if(val&&!_deletedScanIds.has(id))merged[id]=val;});
+ Object.entries(fbObj||{}).forEach(([id,val])=>{
+ if(!val||_deletedScanIds.has(id))return;
+ if(!val.id)val.id=id; // ensure record carries its own Firebase key as id
+ merged[id]=val;
+ });
 
  scannedAll.forEach(r=>{
  if(merged[r.id])return; // already in Firebase — skip
@@ -3416,7 +3484,25 @@ function _mergeFirebaseScans(fbObj){
  if(isPending||isRecent||isActiveSession)merged[r.id]=r;
 
  });
- scannedAll=Object.values(merged).filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+ // Defensive de-dup: collapse exact-duplicate records that ended up under
+ // different Firebase keys/ids but represent the identical scan event
+ // (same table+carton+ean+poNo+exact millisecond timestamp). This guards
+ // against a record being double-counted in dashboard totals/mismatch if a
+ // retried write was ever re-queued under a new id. Legitimate repeat scans
+ // of the same EAN have distinct ts values (Date.now()+i), so they are
+ // unaffected.
+ const seenSig={};
+ Object.values(merged).forEach(r=>{
+ if(!r||!r.id)return;
+ const sig=r.tbl+'|'+r.carton+'|'+r.ean+'|'+r.poNo+'|'+r.ts;
+ const existing=seenSig[sig];
+ if(!existing||r.id<existing.id){seenSig[sig]=r;}
+ });
+ const dedupedMerged={};
+ Object.values(seenSig).forEach(r=>{dedupedMerged[r.id]=r;});
+
+ scannedAll=Object.values(dedupedMerged).filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0));
  LS.save('scanned',scannedAll);
 }
 
@@ -3501,6 +3587,18 @@ async function pullFromFirebase(fullPull=false){
  tagContainer.innerHTML=names.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(124,58,237,.09);color:var(--purple);border:1px solid rgba(124,58,237,.25)">📋 ${n}</span>`).join('');
  }
  }
+ }
+ }
+ }catch(e){}
+ // Sync shared Google API key so table devices can fetch too
+ try{
+ const fbKeyCfg=await fbGet('gs_api_key_cfg');
+ if(fbKeyCfg&&fbKeyCfg.key){
+ const localTs=LS.load('gs_api_key_ts',0);
+ if(!gsApiKey()||(fbKeyCfg.ts&&fbKeyCfg.ts>localTs)){
+ LS.save('gsheet_api_key',fbKeyCfg.key);
+ LS.save('gs_api_key_ts',fbKeyCfg.ts||Date.now());
+ const kInp=document.getElementById('gsheet-api-key');if(kInp)kInp.value=fbKeyCfg.key;
  }
  }
  }catch(e){}
@@ -4029,6 +4127,7 @@ function onLoginSuccess(){
  goPage('scan');
  document.getElementById('myTableDisplay').textContent='Table '+String(currentUser.table).padStart(2,'0');
  document.getElementById('scanPageSub').textContent='Scanning for Table '+String(currentUser.table).padStart(2,'0');
+ restoreActiveSession(currentUser.table);
  if(fbConfig){
  fbConnected=true;isOnline=navigator.onLine;
  setBanner('syncing','⟳ Firebase connecting · Table '+String(currentUser.table).padStart(2,'0')+'…');
@@ -4526,6 +4625,29 @@ function clearSTO(){
  updateHeaderStats();
  toast('STO data cleared','warn');
 }
+function clearSTOSheetData(){
+ if(!confirm('Clear all STO data fetched from Google Sheet and reset the sheet connection?'))return;
+ stoData=[];
+ LS.remove('sto');LS.save('sto_cleared',true);
+ // Reset GSheet config locally and in Firebase
+ LS.remove('gsheet_sto_url');LS.remove('gsheet_sto_sheet');LS.remove('gs_sto_cfg_ts');
+ const urlInp=document.getElementById('gsheet-sto-url');if(urlInp)urlInp.value='';
+ const sheetInp=document.getElementById('gsheet-sto-sheet');if(sheetInp)sheetInp.value='';
+ const tagContainer=document.getElementById('sto-sheet-tags');if(tagContainer)tagContainer.innerHTML='';
+ const btn=document.getElementById('gsheet-sto-fetch-btn');if(btn)btn.disabled=true;
+ const statusEl=document.getElementById('sto-sync-status');if(statusEl)statusEl.textContent='';
+ if(typeof _stoStatusMsg==='function')_stoStatusMsg('STO sheet data cleared',false);
+ if(typeof _gsStoLastHash!=='undefined')_gsStoLastHash='';
+ if(fbConfig){
+ fbDelete('sto');
+ fbDelete('gs_sto_cfg');
+ fbPut('sto_meta',{status:'cleared',ts:Date.now(),clearedBy:currentUser&&currentUser.username?currentUser.username:'admin'});
+ }
+ updateHeaderStats();
+ const activePage=document.querySelector('.page.active');
+ if(activePage&&activePage.id==='page-stostatus'&&typeof renderSTOStatus==='function')renderSTOStatus();
+ toast('STO Sheet data & connection cleared','warn');
+}
 function clearInward(){
  inwardData=[];
  LS.remove('inward');LS.remove('inward_fname');
@@ -4625,52 +4747,28 @@ function setGSheetStatus(msg,type){
 
 async function fetchGSheetInward(silent){
  const rawUrl=(document.getElementById('gsheet-inward-url').value||'').trim();
- if(!rawUrl){if(!silent)toast('Paste the Apps Script Web App URL first','warn');return;}
+ if(!rawUrl){if(!silent)toast('Paste the Google Sheet URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){if(!silent)toast('Paste your Google API Key first','warn');setGSheetStatus('⚠ Missing API Key','err');return;}
  setGSheetStatus('⏳ Fetching from Google Sheet…','load');
  const btn=document.getElementById('gsheet-fetch-btn');
  if(!silent&&btn)btn.disabled=true;
  try{
- const sheetInput=(document.getElementById('gsheet-inward-sheet')||{value:''}).value.trim();
-
- const sheetNames=sheetInput?sheetInput.split(',').map(s=>s.trim()).filter(Boolean):[''];
- const sep=rawUrl.includes('?')?'&':'?';
- let allRows=[];
- let fetchLog=[];
- for(let si=0;si<sheetNames.length;si++){
- const sn=sheetNames[si];
- const sheetParam=sn?('&sheet='+encodeURIComponent(sn)):'';
- const label=sn||'(active sheet)';
- if(sheetNames.length>1){
- setGSheetStatus('⏳ Fetching sheet '+(si+1)+'/'+sheetNames.length+': '+label+'…','load');
- }
- const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)throw new Error('HTTP '+resp.status+' on sheet: '+label);
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
- if(!rows||!rows.length){
- fetchLog.push('⚠ '+label+': no rows');
- continue;
- }
-
- const tagged=rows.map(r=>({...r,_sourceSheet:sn||''}));
- allRows=allRows.concat(tagged);
- fetchLog.push('✓ '+label+': '+rows.length+' rows');
- }
+ const {allRows,fetchLog,names}=await sheetsApiFetchRows('gsheet_inward_url','gsheet_inward_sheet');
  if(!allRows.length){
- setGSheetStatus('⚠ No rows returned from any sheet — check sheet names and data','err');
+ setGSheetStatus('⚠ No rows returned from any sheet — check tab names and data','err');
  if(!silent&&btn)btn.disabled=false;
  return;
  }
- const summary=sheetNames.length>1?('✓ '+allRows.length+' rows from '+sheetNames.length+' sheets'):('✓ Fetched '+allRows.length+' rows');
+ const summary=names.length>1?('✓ '+allRows.length+' rows from '+names.length+' sheets'):('✓ Fetched '+allRows.length+' rows');
  setGSheetStatus(summary+' — processing…','ok');
- if(!silent&&sheetNames.length>1)toast(fetchLog.join(' | '),'ok');
+ if(!silent&&names.length>1)toast(fetchLog.join(' | '),'ok');
  processGSheetInwardRows(allRows,silent);
 
  _gsLastHash='';
  _gsHashPoll();
  if(!silent&&btn)btn.disabled=false;
  }catch(err){
- setGSheetStatus('✗ '+err.message+' — Check Web App URL and ensure access is set to Anyone','err');
+ setGSheetStatus('✗ '+err.message,'err');
  if(!silent&&btn)btn.disabled=false;
  }
 }
@@ -4922,20 +5020,15 @@ function processGSheetInwardRows(rows,silent){
 
 async function debugGSheetCols(){
  const rawUrl=(document.getElementById('gsheet-inward-url').value||'').trim();
- if(!rawUrl){toast('Paste the Web App URL first','warn');return;}
+ if(!rawUrl){toast('Paste the Google Sheet URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){toast('Paste your Google API Key first','warn');return;}
  const dbg=document.getElementById('gsheet-debug');
  if(dbg){dbg.style.display='block';dbg.textContent='Fetching column names...';}
  try{
- const sheetName2=(document.getElementById('gsheet-inward-sheet')||{value:''}).value.trim();
- const sep=rawUrl.includes('?')?'&':'?';
- const sheetParam2=sheetName2?('&sheet='+encodeURIComponent(sheetName2)):'';
- const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam2,{cache:'no-cache'});
- if(!resp.ok)throw new Error('HTTP '+resp.status);
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:[]);
- if(!rows.length){if(dbg)dbg.textContent='No rows returned from sheet.';return;}
- const keys=Object.keys(rows[0]);
- const sample=rows[0];
+ const {allRows}=await sheetsApiFetchRows('gsheet_inward_url','gsheet_inward_sheet');
+ if(!allRows.length){if(dbg)dbg.textContent='No rows returned from sheet.';return;}
+ const keys=Object.keys(allRows[0]).filter(k=>k!=='_sourceSheet');
+ const sample=allRows[0];
  let out='Column names from your sheet ('+keys.length+' columns):\n\n';
  keys.forEach(k=>{out+=' "'+k+'" : '+JSON.stringify(sample[k])+'\n';});
  if(dbg)dbg.textContent=out;
@@ -4985,45 +5078,28 @@ function setGSheet2Status(msg,type){
 
 async function fetchGSheet2Inward(silent){
  const rawUrl=(document.getElementById('gsheet2-inward-url').value||'').trim();
- if(!rawUrl){if(!silent)toast('Paste the Sheet 2 Web App URL first','warn');return;}
+ if(!rawUrl){if(!silent)toast('Paste the Sheet 2 URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){if(!silent)toast('Paste your Google API Key first','warn');setGSheet2Status('⚠ Missing API Key','err');return;}
  setGSheet2Status('⏳ Fetching from Sheet 2…','load');
  const btn=document.getElementById('gsheet2-fetch-btn');
  if(!silent&&btn)btn.disabled=true;
  try{
- const sheetInput=(document.getElementById('gsheet2-inward-sheet')||{value:''}).value.trim();
- const sheetNames=sheetInput?sheetInput.split(',').map(s=>s.trim()).filter(Boolean):[''];
- const sep=rawUrl.includes('?')?'&':'?';
- let allRows=[];
- let fetchLog=[];
- for(let si=0;si<sheetNames.length;si++){
- const sn=sheetNames[si];
- const sheetParam=sn?('&sheet='+encodeURIComponent(sn)):'';
- const label=sn||'(active sheet)';
- if(sheetNames.length>1){setGSheet2Status('⏳ Fetching sheet '+(si+1)+'/'+sheetNames.length+': '+label+'…','load');}
- const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)throw new Error('HTTP '+resp.status+' on sheet: '+label);
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
- if(!rows||!rows.length){fetchLog.push('⚠ '+label+': no rows');continue;}
- const tagged=rows.map(r=>({...r,_sourceSheet:sn||''}));
- allRows=allRows.concat(tagged);
- fetchLog.push('✓ '+label+': '+rows.length+' rows');
- }
+ const {allRows,fetchLog,names}=await sheetsApiFetchRows('gsheet2_inward_url','gsheet2_inward_sheet');
  if(!allRows.length){
- setGSheet2Status('⚠ No rows returned from Sheet 2 — check sheet names and data','err');
+ setGSheet2Status('⚠ No rows returned from Sheet 2 — check tab names and data','err');
  if(!silent&&btn)btn.disabled=false;
  return;
  }
- const summary=sheetNames.length>1?('✓ '+allRows.length+' rows from '+sheetNames.length+' sheets'):('✓ Fetched '+allRows.length+' rows from Sheet 2');
+ const summary=names.length>1?('✓ '+allRows.length+' rows from '+names.length+' sheets'):('✓ Fetched '+allRows.length+' rows from Sheet 2');
  setGSheet2Status(summary+' — processing…','ok');
- if(!silent&&sheetNames.length>1)toast(fetchLog.join(' | '),'ok');
+ if(!silent&&names.length>1)toast(fetchLog.join(' | '),'ok');
 
  _processGSheet2Rows(allRows,silent);
  _gs2LastHash='';
  _gsHash2Poll();
  if(!silent&&btn)btn.disabled=false;
  }catch(err){
- setGSheet2Status('✗ '+err.message+' — Check Web App URL and ensure access is set to Anyone','err');
+ setGSheet2Status('✗ '+err.message,'err');
  if(!silent&&btn)btn.disabled=false;
  }
 }
@@ -5141,20 +5217,15 @@ function _processGSheet2Rows(rows,silent){
 
 async function debugGSheet2Cols(){
  const rawUrl=(document.getElementById('gsheet2-inward-url').value||'').trim();
- if(!rawUrl){toast('Paste the Sheet 2 Web App URL first','warn');return;}
+ if(!rawUrl){toast('Paste the Sheet 2 URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){toast('Paste your Google API Key first','warn');return;}
  const dbg=document.getElementById('gsheet2-debug');
  if(dbg){dbg.style.display='block';dbg.textContent='Fetching column names from Sheet 2…';}
  try{
- const sheetName2=(document.getElementById('gsheet2-inward-sheet')||{value:''}).value.trim();
- const sep=rawUrl.includes('?')?'&':'?';
- const sheetParam2=sheetName2?('&sheet='+encodeURIComponent(sheetName2)):'';
- const resp=await fetch(rawUrl+sep+'_cb='+Date.now()+sheetParam2,{cache:'no-cache'});
- if(!resp.ok)throw new Error('HTTP '+resp.status);
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:[]);
- if(!rows.length){if(dbg)dbg.textContent='No rows returned from Sheet 2.';return;}
- const keys=Object.keys(rows[0]);
- const sample=rows[0];
+ const {allRows}=await sheetsApiFetchRows('gsheet2_inward_url','gsheet2_inward_sheet');
+ if(!allRows.length){if(dbg)dbg.textContent='No rows returned from Sheet 2.';return;}
+ const keys=Object.keys(allRows[0]).filter(k=>k!=='_sourceSheet');
+ const sample=allRows[0];
  let out='Sheet 2 — Column names ('+keys.length+' columns):\n\n';
  keys.forEach(k=>{out+=' "'+k+'" : '+JSON.stringify(sample[k])+'\n';});
  if(dbg)dbg.textContent=out;
@@ -5169,8 +5240,11 @@ let _gs2CountTimer=null;
 
 function _startGSheet2LiveSync(){
  if(_gs2SyncTimer)return;
- _gs2SyncTimer=setInterval(()=>{if(!document.hidden)_gsHash2Poll();},15000);
+ setTimeout(()=>{
+ if(_gs2SyncTimer)return;
+ _gs2SyncTimer=setInterval(()=>{if(!document.hidden)_gsHash2Poll();},20000);
  _gsHash2Poll();
+ },7000);
  _gs2SyncCountdown=15;
  if(_gs2CountTimer)clearInterval(_gs2CountTimer);
  _gs2CountTimer=setInterval(()=>{
@@ -5181,23 +5255,20 @@ function _startGSheet2LiveSync(){
  },1000);
 }
 
+let _gs2PollBusy=false;
 async function _gsHash2Poll(){
  const url=LS.load('gsheet2_inward_url','');
- if(!url||!currentUser)return;
+ if(!url||!currentUser||!gsApiKey())return;
+ if(_gs2PollBusy)return;
+ _gs2PollBusy=true;
  _gs2SyncCountdown=15;
  try{
- const sep=url.includes('?')?'&':'?';
- const savedSheets=(()=>{const s=LS.load('gsheet2_inward_sheet','');return s?s.split(',').map(x=>x.trim()).filter(Boolean):[];})();
- const sheetParam=savedSheets.length?'&sheet='+encodeURIComponent(savedSheets.join(',')):'';
- const resp=await fetch(url+sep+'action=hash&_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)return;
- const json=await resp.json();
- const newHash=json.hash||'';
- if(!newHash)return;
+ const {allRows}=await sheetsApiFetchRows('gsheet2_inward_url','gsheet2_inward_sheet');
+ const newHash=_gsQuickHash(JSON.stringify(allRows));
  if(newHash!==_gs2LastHash){
  const wasEmpty=!_gs2LastHash;
  _gs2LastHash=newHash;
- await _autoFetchGSheet2Async();
+ if(allRows.length)_processGSheet2Rows(allRows,true);
  const el=document.getElementById('gs2-sync-status');
  if(el){
  el.textContent=wasEmpty?'✅ Synced':'⚡ Sheet 2 updated — synced';
@@ -5210,7 +5281,9 @@ async function _gsHash2Poll(){
  }
  }catch(e){
  const el=document.getElementById('gs2-sync-status');
- if(el){el.textContent='⚠ Check failed';el.style.color='var(--orange)';}
+ if(el){el.textContent='⚠ '+(e.name==='AbortError'?'Timed out':(e.message||'Check failed'));el.style.color='var(--orange)';}
+ }finally{
+ _gs2PollBusy=false;
  }
 }
 
@@ -5220,23 +5293,54 @@ async function _autoFetchGSheetStoAsync(){
  try{await fetchGSheetSto(true);}catch(e){}
 }
 
+// STO sheet had NO recurring auto-sync at all before this fix — it only ever fetched once
+// on page load, which is why it always needed a manual "Fetch STO Sheet" click.
+let _gsStoLastHash='';
+let _gsStoSyncTimer=null;
+let _gsStoSyncCountdown=0;
+let _gsStoCountTimer=null;
+
+function _startGSheetStoLiveSync(){
+ if(_gsStoSyncTimer)return; // already running
+ setTimeout(()=>{
+ if(_gsStoSyncTimer)return;
+ _gsStoSyncTimer=setInterval(()=>{if(!document.hidden)_gsHashStoPoll();},20000);
+ _gsHashStoPoll();
+ },14000);
+ _gsStoSyncCountdown=15;
+ if(_gsStoCountTimer)clearInterval(_gsStoCountTimer);
+ _gsStoCountTimer=setInterval(()=>{
+ if(document.hidden)return;
+ _gsStoSyncCountdown=Math.max(0,_gsStoSyncCountdown-1);
+ const el=document.getElementById('sto-sync-countdown');
+ if(el)el.textContent=_gsStoSyncCountdown>0?'next check in '+_gsStoSyncCountdown+'s':'checking…';
+ },1000);
+}
+
+let _gsStoPollBusy=false;
+async function _gsHashStoPoll(){
+ const url=LS.load('gsheet_sto_url','');
+ if(!url||!currentUser||!gsApiKey())return;
+ if(_gsStoPollBusy)return;
+ _gsStoPollBusy=true;
+ _gsStoSyncCountdown=15;
+ try{
+ // fetchGSheetSto does its own single fetch + row transform, so just call it directly
+ // instead of fetching twice (once to check, once to load).
+ await fetchGSheetSto(true);
+ }catch(e){
+ const el=document.getElementById('sto-sync-status');
+ if(el){el.textContent='⚠ '+(e.name==='AbortError'?'Timed out':(e.message||'Check failed'));el.style.color='var(--orange)';}
+ }finally{
+ _gsStoPollBusy=false;
+ }
+}
+
 async function _autoFetchGSheet2Async(){
  const url=LS.load('gsheet2_inward_url','');
- if(!url)return;
+ if(!url||!gsApiKey())return;
  try{
- const sep=url.includes('?')?'&':'?';
- const savedSheetInput=LS.load('gsheet2_inward_sheet','')||'';
- const sheetNames=savedSheetInput?savedSheetInput.split(',').map(s=>s.trim()).filter(Boolean):[''];
- let allRows=[];
- for(const sn of sheetNames){
- const sheetParam=sn?'&sheet='+encodeURIComponent(sn):'';
- const resp=await fetch(url+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)continue;
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
- if(!rows||!rows.length)continue;
- allRows=allRows.concat(rows.map(r=>({...r,_sourceSheet:sn||''})));
- }
+ const {allRows}=await sheetsApiFetchRows('gsheet2_inward_url','gsheet2_inward_sheet');
  if(!allRows.length)return;
  _processGSheet2Rows(allRows,true);
  }catch(e){}
@@ -5268,6 +5372,7 @@ function onGSheetStoUrlInput(){
  document.getElementById('gsheet-sto-fetch-btn').disabled=!url;
  if(url)LS.save('gsheet_sto_url',url);else LS.remove('gsheet_sto_url');
  if(fbConfig){const _ts=Date.now();LS.save('gs_sto_cfg_ts',_ts);queueWrite('gs_sto_cfg',{url,sheet:LS.load('gsheet_sto_sheet',''),ts:_ts});}
+ if(url){_gsStoLastHash='';_startGSheetStoLiveSync();}
 }
 function onGSheetStoSheetInput(){
  const sh=(document.getElementById('gsheet-sto-sheet').value||'').trim();
@@ -5286,29 +5391,20 @@ function _stoStatusMsg(msg,ok){
 }
 async function fetchGSheetSto(silent){
  const rawUrl=(document.getElementById('gsheet-sto-url').value||'').trim();
- if(!rawUrl){if(!silent)toast('Paste the Apps Script Web App URL first','warn');return;}
+ if(!rawUrl){if(!silent)toast('Paste the STO Sheet URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){if(!silent)toast('Paste your Google API Key first','warn');return;}
  const btn=document.getElementById('gsheet-sto-fetch-btn');
- const sheetInput=(document.getElementById('gsheet-sto-sheet')||{value:''}).value.trim();
- const sheetNames=sheetInput?sheetInput.split(',').map(x=>x.trim()).filter(Boolean):[''];
  const statusEl=document.getElementById('sto-sync-status');
  const dbgEl=document.getElementById('gsheet-sto-status');
  if(btn){btn.disabled=true;btn.textContent='⏳ Fetching…';}
  if(statusEl)statusEl.textContent='Fetching…';
- const sep=rawUrl.includes('?')?'&':'?';
- let allRows=[],fetchLog=[];
+ let allRows=[],fetchLog=[],sheetNames=[''];
  try{
- for(let si=0;si<sheetNames.length;si++){
- const sn=sheetNames[si];
- const sheetParam=sn?('&sheet='+encodeURIComponent(sn)):'';
- const label=sn||'(active sheet)';
- const fetchUrl=rawUrl+sep+'_cb='+Date.now()+sheetParam;
- const resp=await fetch(fetchUrl,{cache:'no-cache'});
- if(!resp.ok)throw new Error('HTTP '+resp.status+' for sheet: '+label);
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
- if(!rows||!rows.length){fetchLog.push('⚠ '+label+': no rows');continue;}
- fetchLog.push('✓ '+label+': '+rows.length+' rows');
- rows.forEach(row=>{
+ const fetched=await sheetsApiFetchRows('gsheet_sto_url','gsheet_sto_sheet');
+ fetchLog=fetched.fetchLog;
+ sheetNames=fetched.names;
+ fetched.allRows.forEach(row=>{
+
  const r={};
  for(const k of Object.keys(row)){const v=String(row[k]===null||row[k]===undefined?'':row[k]).trim();r[k.trim()]=v;}
 
@@ -5358,12 +5454,11 @@ async function fetchGSheetSto(silent){
  };
  allRows.push(norm);
  });
- }
  }catch(err){
  if(btn){btn.disabled=false;btn.textContent='⬇ Fetch STO Sheet';}
  const msg=err.message||'Network error';
  if(statusEl)statusEl.textContent='⚠ Failed';
- _stoStatusMsg('✗ '+msg+' — Check Web App URL and ensure access is set to Anyone','err');
+ _stoStatusMsg('✗ '+msg,'err');
  if(!silent)toast('STO fetch failed: '+msg,'err');
  return;
  }
@@ -5390,20 +5485,17 @@ async function fetchGSheetSto(silent){
  const activePage=document.querySelector('.page.active');
  if(activePage&&activePage.id==='page-stostatus')renderSTOStatus();
 }
-function debugGSheetStoCols(){
+async function debugGSheetStoCols(){
  const rawUrl=(document.getElementById('gsheet-sto-url').value||'').trim();
  const dbg=document.getElementById('gsheet-sto-debug');
- if(!rawUrl){toast('Enter STO Sheet URL first','warn');return;}
+ if(!rawUrl){toast('Enter STO Sheet URL or Spreadsheet ID first','warn');return;}
+ if(!gsApiKey()){toast('Paste your Google API Key first','warn');return;}
  if(dbg){dbg.style.display='block';dbg.textContent='Fetching raw columns…';}
- const sheetName=(document.getElementById('gsheet-sto-sheet')||{value:''}).value.trim().split(',')[0].trim();
- let url=rawUrl+(rawUrl.includes('?')?'&':'?')+'t='+Date.now();
- if(sheetName)url+='&sheet='+encodeURIComponent(sheetName);
- fetchWithTimeout(url,{},12000).then(r=>r.text()).then(text=>{
- let parsed;try{parsed=JSON.parse(text);}catch(e){if(dbg)dbg.textContent='Invalid JSON: '+text.substring(0,200);return;}
- const arr=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.data)?parsed.data:[]);
- const cols=arr.length?Object.keys(arr[0]):[];
- if(dbg)dbg.textContent='Columns ('+cols.length+'): '+cols.join(', ')+'\n\nFirst row: '+JSON.stringify(arr[0]||{},null,2);
- }).catch(e=>{if(dbg)dbg.textContent='Error: '+e.message;});
+ try{
+ const {allRows}=await sheetsApiFetchRows('gsheet_sto_url','gsheet_sto_sheet');
+ const cols=allRows.length?Object.keys(allRows[0]).filter(k=>k!=='_sourceSheet'):[];
+ if(dbg)dbg.textContent='Columns ('+cols.length+'): '+cols.join(', ')+'\n\nFirst row: '+JSON.stringify(allRows[0]||{},null,2);
+ }catch(e){if(dbg)dbg.textContent='Error: '+e.message;}
 }
 function restoreGSheetStoPrefs(){
  const savedUrl=LS.load('gsheet_sto_url','');
@@ -5411,6 +5503,7 @@ function restoreGSheetStoPrefs(){
  const inp=document.getElementById('gsheet-sto-url');
  if(inp){inp.value=savedUrl;}
  const btn=document.getElementById('gsheet-sto-fetch-btn');if(btn)btn.disabled=false;
+ _startGSheetStoLiveSync();
  }
  const savedSheet=LS.load('gsheet_sto_sheet','');
  if(savedSheet){
@@ -5837,6 +5930,7 @@ function startSession(){
 
  _scanStats.cartonRecs=0;
  _scanStats.sizeMap={};
+ LS.save('activeSession_'+tbl,session);
  }else{
 
  const szBreakdown=readSzBdInputs();
@@ -5850,7 +5944,16 @@ function startSession(){
  };
  mrpPromptedDescs=new Set();
  }
+ LS.save('activeSession_'+tbl,session);
 
+ _activateSessionUI();
+ toast('Carton started · '+carton+' · '+units+' units · '+dt.shift+' shift','ok');
+}
+
+function _activateSessionUI(){
+ if(!session)return;
+ const tbl=session.tbl,po=session.po,invNo=session.invNo,carton=session.carton,units=session.units;
+ const dt={date:session.startDt,time:session.startTime,shift:session.shift};
  document.getElementById('bcInput').disabled=false;document.getElementById('bcBtn').disabled=false;
  document.getElementById('bcInput').focus();
  document.getElementById('scanBox').className='scan-box ready';
@@ -5889,7 +5992,16 @@ function startSession(){
 
  resetScanStats();
  renderScannedTable();updateStats();updateScanCounts();
- toast('Carton started · '+carton+' · '+units+' units · '+dt.shift+' shift','ok');
+}
+
+function restoreActiveSession(tbl){
+ const saved=LS.load('activeSession_'+tbl,null);
+ if(!saved||!saved.po)return false;
+ session=saved;
+ mrpPromptedDescs=new Set();
+ _activateSessionUI();
+ toast('Restored active session · PO '+session.po+' · Carton '+session.carton,'ok');
+ return true;
 }
 
 function renderCartonLog(){
@@ -6063,10 +6175,8 @@ function endSession(){
  if(fbConfig&&closedRecs.length){
  closedRecs.forEach(r=>queueScanWrite(r));
  scheduleFlush(300);
- }
+ } LS.remove('activeSession_'+session.tbl);
  session=null;
- mrpPromptedDescs=new Set();
- document.getElementById('bcInput').disabled=true;document.getElementById('bcBtn').disabled=true;
  document.getElementById('bcInput').value='';
  document.getElementById('scanBox').className='scan-box';
  document.getElementById('sbStatus').className='sb-status idle';document.getElementById('sbStatus').textContent='Not Active';
@@ -9317,7 +9427,7 @@ function renderGRNDash(){
  const pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0);
  const pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
 
- const DAILY_CAP=30000;
+ const DAILY_CAP=40000;
  let capRemaining=DAILY_CAP;
  let beyondCapQty=0;
 
@@ -9343,8 +9453,8 @@ function renderGRNDash(){
  const tatList=invList;
 
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
- const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
+ // Business rule: if Invoice Qty <= 40000 → Above TAT = Total Invoice Qty - Within TAT; if > 40000 → Above TAT = 40000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=40000?uQty:40000)-within-pQty);
  const tatTotal=above+within;
  const abovePct=tatTotal>0?((above/tatTotal)*100).toFixed(2)+'%':'0.00%';
  const withinPct=tatTotal>0?((within/tatTotal)*100).toFixed(2)+'%':'0.00%';
@@ -9559,7 +9669,7 @@ function exportGRNDash(){
  const pendList=invList.filter(i=>i.grnStatus!=='Done');
  const pInv=pendList.length,pBoxes=pendList.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
 
- const DAILY_CAP_EX=30000;
+ const DAILY_CAP_EX=40000;
  let capRem=DAILY_CAP_EX,beyondQty=0;
  const wcQty={};
  invList.forEach(inv=>{
@@ -9572,8 +9682,8 @@ function exportGRNDash(){
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
- // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
- const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
+ // Business rule: if Invoice Qty <= 40000 → Above TAT = Total Invoice Qty - Within TAT; if > 40000 → Above TAT = 40000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=40000?uQty:40000)-within-pQty);
  const t=above+within;
  return[date,uInv,uBoxes,uQty,dInv,dBoxes,dQty,upInv,upBoxes,upQty,iInv,iBoxes,iQty,pInv,pBoxes,pQty,beyond,above,within,t>0?((above/t)*100).toFixed(2)+'%':'0.00%',t>0?((within/t)*100).toFixed(2)+'%':'0.00%'];
  });
@@ -9604,7 +9714,7 @@ function exportGRNDashExcel(){
  });
  if(!sortedDates.length){toast('No dates to export','warn');return;}
 
- const DAILY_CAP=30000;
+ const DAILY_CAP=40000;
  const kpi={unloadInv:0,unloadBoxes:0,unloadQty:0,doneInv:0,doneBoxes:0,doneQty:0,underInv:0,underBoxes:0,underQty:0,issueInv:0,issueBoxes:0,issueQty:0,pendInv:0,pendBoxes:0,pendQty:0,beyondCap:0,aboveTAT:0,withinTAT:0};
 
  const dataRows=sortedDates.map(date=>{
@@ -9630,8 +9740,8 @@ function exportGRNDashExcel(){
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList.filter(i=>(wcQty[i.id]||0)>0);
  const within=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(wcQty[i.id]||0),0);
- // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
- const above=Math.max(0,(uQty<=30000?uQty:30000)-within-pQty);
+ // Business rule: if Invoice Qty <= 40000 → Above TAT = Total Invoice Qty - Within TAT; if > 40000 → Above TAT = 40000 - Within TAT; min 0
+ const above=Math.max(0,(uQty<=40000?uQty:40000)-within-pQty);
  const t=above+within;
  const abovePct=t>0?(above/t)*100:0;
  const withinPct=t>0?(within/t)*100:0;
@@ -9944,7 +10054,7 @@ function exportCombinedDashImage(){
  const byDate={};
  inwardData.forEach(inv=>{const d=inv.date||'—';if(!byDate[d])byDate[d]=[];byDate[d].push(inv);});
  grnSortedDates=Object.keys(byDate).sort((a,b)=>{const da=_gdParseDate(a),db=_gdParseDate(b);if(da&&db)return da-db;return a.localeCompare(b);});
- const DAILY_CAP=30000;
+ const DAILY_CAP=40000;
  grnSummary=grnSortedDates.map(date=>{
  const il=byDate[date];
  const uInv=il.length,uBoxes=il.reduce((s,i)=>s+(parseInt(i.noOfCartons)||0),0),uQty=il.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
@@ -9954,14 +10064,16 @@ function exportCombinedDashImage(){
  const upInv=underList.length,upQty=underList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const issueList=il.filter(i=>i.grnStatus!=='Done'&&i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done'));
  const iInv=issueList.length,iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
+ const pendList=il.filter(i=>i.grnStatus!=='Done');
+ const pQty=pendList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  let capRem=DAILY_CAP,bcQty=0;const wc={};
  il.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=il;
  const rawWithin=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ // Business rule: if Invoice Qty <= 40000 → Above TAT = Total Invoice Qty - Within TAT; if > 40000 → Above TAT = 40000 - Within TAT; min 0
  const within=rawWithin;
- const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within);
+ const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within-pQty);
  T.uInv+=uInv;T.uBoxes+=uBoxes;T.uQty+=uQty;T.dInv+=dInv;T.dQty+=dQty;T.upInv+=upInv;T.upQty+=upQty;T.iInv+=iInv;T.iQty+=iQty;T.above+=above;T.within+=within;T.bc+=bcQty;
  const t2=above+within;
  return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty,wPct:t2>0?((within/t2)*100).toFixed(1)+'%':'—',aPct:t2>0?((above/t2)*100).toFixed(1)+'%':'—',dPct:uInv>0?((dInv/uInv)*100).toFixed(0)+'%':'—'};
@@ -10954,15 +11066,15 @@ function exportGRNDashImage(){
  const upInv=underList.length,upQty=underList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
  const issueList=invList.filter(i=>i.grnStatus!=='Done'&&i.grnRemark&&i.grnRemark.trim()&&!(i.grnRemark||'').toLowerCase().includes('grn done'));
  const iInv=issueList.length,iQty=issueList.reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- const DAILY_CAP=30000;let capRem=DAILY_CAP,bcQty=0;const wc={};
+ const DAILY_CAP=40000;let capRem=DAILY_CAP,bcQty=0;const wc={};
  invList.forEach(inv=>{const q=parseInt(inv.totalInvQty)||0;if(capRem<=0){bcQty+=q;}else if(q<=capRem){wc[inv.id]=q;capRem-=q;}else{wc[inv.id]=capRem;bcQty+=q-capRem;capRem=0;}});
 
  // tatList: _gdTAT() classifies by grnStatus + GRN Date vs Issue Resolved Date diff
  const tatList=invList;
  const rawWithinJ=tatList.filter(i=>_gdTAT(i)==='within').reduce((s,i)=>s+(parseInt(i.totalInvQty)||0),0);
- // Business rule: if Invoice Qty <= 30000 → Above TAT = Total Invoice Qty - Within TAT; if > 30000 → Above TAT = 30000 - Within TAT; min 0
+ // Business rule: if Invoice Qty <= 40000 → Above TAT = Total Invoice Qty - Within TAT; if > 40000 → Above TAT = 40000 - Within TAT; min 0
  const within=rawWithinJ;
- const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within);
+ const above=Math.max(0,(uQty<=DAILY_CAP?uQty:DAILY_CAP)-within-(upQty+iQty));
  return{date,uInv,uBoxes,uQty,dInv,dQty,upInv,upQty,iInv,iQty,above,within,bc:bcQty};
  });
 
@@ -11707,7 +11819,7 @@ function initUI(){
  renderInwardPreview();
  refreshInvNoDropdown(undefined);
  }
- populateTableSelect();updateHeaderStats();updateQueueBadge();restoreGSheetPrefs();restoreGSheet2Prefs();restoreGSheetStoPrefs();
+ populateTableSelect();updateHeaderStats();updateQueueBadge();restoreGSheetApiKey();restoreGSheetPrefs();restoreGSheet2Prefs();restoreGSheetStoPrefs();
 
  if(fbConfig){
 
@@ -11740,11 +11852,14 @@ function initUI(){
 
  setTimeout(_autoFetchGSheet, 800);
  setTimeout(_autoFetchGSheet2Async, 1200);
+ setTimeout(_autoFetchGSheetStoAsync, 1600);
  }
 
  setInterval(()=>{if(fbConfig&&isOnline&&writeQueue.length>0)flushQueue();},30000);
 
  _startGSheetLiveSync();
+ _startGSheet2LiveSync();
+ if(LS.load('gsheet_sto_url',''))_startGSheetStoLiveSync();
 }
 
 let _gsLastHash=''; // last known hash string from the sheet
@@ -11754,8 +11869,7 @@ let _gsSyncCountTimer=null;
 
 function _startGSheetLiveSync(){
  if(_gsSyncTimer)return; // already running
- _gsSyncTimer=setInterval(_gsHashPoll, 15000);
-
+ _gsSyncTimer=setInterval(_gsHashPoll, 20000);
  _gsHashPoll();
 
  _gsSyncCountdown=15;
@@ -11767,27 +11881,29 @@ function _startGSheetLiveSync(){
  },1000);
 }
 
+function _gsQuickHash(str){
+ // Cheap, dependable content hash — works no matter what the Apps Script backend returns,
+ // so auto-sync no longer depends on the backend supporting a special ?action=hash endpoint.
+ let h=0;
+ for(let i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))|0;}
+ return str.length+'_'+h;
+}
+
+let _gsPollBusy=false;
 async function _gsHashPoll(){
  const url=LS.load('gsheet_inward_url','');
- if(!url||!currentUser)return;
+ if(!url||!currentUser||!gsApiKey())return;
+ if(_gsPollBusy)return; // don't stack requests if the previous check is still in flight
+ _gsPollBusy=true;
  _gsSyncCountdown=15; // reset countdown
  try{
- const sep=url.includes('?')?'&':'?';
-
- const _savedSheets=(()=>{const s=LS.load('gsheet_inward_sheet','');return s?s.split(',').map(x=>x.trim()).filter(Boolean):[];})();
- const sheetParam=_savedSheets.length?'&sheet='+encodeURIComponent(_savedSheets.join(',')):'';
- const resp=await fetch(url+sep+'action=hash&_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)return;
- const json=await resp.json();
- const newHash=json.hash||'';
- if(!newHash)return;
+ const {allRows}=await sheetsApiFetchRows('gsheet_inward_url','gsheet_inward_sheet');
+ const newHash=_gsQuickHash(JSON.stringify(allRows));
  if(newHash!==_gsLastHash){
-
  const wasEmpty=!_gsLastHash;
  _gsLastHash=newHash;
- await _autoFetchGSheetAsync();
+ if(allRows.length)processGSheetInwardRows(allRows,true);
  if(!wasEmpty){
-
  const el=document.getElementById('gs-sync-status');
  if(el){el.textContent='⚡ Sheet updated — synced';el.style.color='var(--green)';}
  setTimeout(()=>{
@@ -11799,37 +11915,26 @@ async function _gsHashPoll(){
  if(el){el.textContent='✅ Live';el.style.color='var(--green)';}
  }
  }else{
-
  const el=document.getElementById('gs-sync-status');
  if(el&&el.textContent!=='✅ Live'){el.textContent='✅ Live';el.style.color='var(--green)';}
  }
  }catch(e){
  const el=document.getElementById('gs-sync-status');
- if(el){el.textContent='⚠ Check failed';el.style.color='var(--orange)';}
+ if(el){el.textContent='⚠ '+(e.name==='AbortError'?'Timed out':(e.message||'Check failed'));el.style.color='var(--orange)';}
+ }finally{
+ _gsPollBusy=false;
  }
 }
 
 async function _autoFetchGSheetAsync(){
  const url=LS.load('gsheet_inward_url','');
- if(!url)return;
+ if(!url||!gsApiKey())return;
  try{
- const sep=url.includes('?')?'&':'?';
- const savedSheetInput=LS.load('gsheet_inward_sheet','')||'';
- const sheetNames=savedSheetInput?savedSheetInput.split(',').map(s=>s.trim()).filter(Boolean):[''];
- let allRows=[];
- for(const sn of sheetNames){
- const sheetParam=sn?'&sheet='+encodeURIComponent(sn):'';
- const resp=await fetch(url+sep+'_cb='+Date.now()+sheetParam,{cache:'no-cache'});
- if(!resp.ok)continue;
- const json=await resp.json();
- const rows=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:null);
- if(!rows||!rows.length)continue;
- allRows=allRows.concat(rows.map(r=>({...r,_sourceSheet:sn||''})));
- }
+ const {allRows,names}=await sheetsApiFetchRows('gsheet_inward_url','gsheet_inward_sheet');
  if(!allRows.length)return;
  processGSheetInwardRows(allRows,true);
  if(currentUser){
- const sheetLabel=sheetNames.filter(Boolean).length>1?sheetNames.filter(Boolean).length+' sheets':'sheet';
+ const sheetLabel=names.length>1?names.length+' sheets':'sheet';
  setBanner('connected','✅ '+sheetLabel+' synced · '+allRows.length+' rows · '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
  setTimeout(()=>{
  if(fbConfig&&currentUser)setBanner('connected',currentUser.type==='admin'?'✅ Firebase live · '+scannedAll.length+' records':'✅ Firebase live · Table '+String(currentUser.table).padStart(2,'0'));
