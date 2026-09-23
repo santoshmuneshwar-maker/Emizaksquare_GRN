@@ -3282,6 +3282,7 @@ async function fbDelete(path,retries=3){
 }
 // surfaces a clear, actionable error instead of leaving writes stuck in the queue silently forever
 function _onFbPermissionError(){
+ window._fbPermErrAt=Date.now();
  const now=Date.now();
  if(window._lastPermErrToast&&(now-window._lastPermErrToast)<30000)return; // throttle to avoid spamming
  window._lastPermErrToast=now;
@@ -3340,7 +3341,8 @@ function _withWriteTimeoutForPath(p,path){
  }
  LS.save('writeQueue',writeQueue);updateQueueBadge();
  if(writeQueue.length===0)setBanner('connected','✅ Synced · '+scannedAll.length+' records');
- else setBanner('queued','⏳ '+writeQueue.length+' pending — retrying');
+ else if(window._fbPermErrAt&&(Date.now()-window._fbPermErrAt)<20000)setBanner('offline','🔒 '+writeQueue.length+' pending — Firebase rejected the write (401/403). Fix Rules in Firebase console');
+ else setBanner('queued','⏳ '+writeQueue.length+' pending — retrying (check internet / Firebase URL)');
  if(flushed>0)updateSyncUI();
  }finally{
  window._flushInProgress=false;
@@ -3752,8 +3754,9 @@ function startInwardMetaPoll(){
  if(!fbConfig)return;
  checkInwardMeta();
  inwardMetaTimer=setInterval(checkInwardMeta,30000);
+ _startMetaSSE('inward_meta',checkInwardMeta);
 }
-function stopInwardMetaPoll(){if(inwardMetaTimer){clearInterval(inwardMetaTimer);inwardMetaTimer=null;}}
+function stopInwardMetaPoll(){if(inwardMetaTimer){clearInterval(inwardMetaTimer);inwardMetaTimer=null;}_stopMetaSSE('inward_meta');}
 
 async function checkInwardMeta(){
  if(!fbConfig||!isOnline)return;
@@ -3780,7 +3783,7 @@ async function checkInwardMeta(){
  }else if(meta.status==='set'){
  const _poLocalTs2=LS.load('po_local_ts',0);
  const _isOwnUpload=_poLocalTs2>0&&Math.abs(meta.ts-_poLocalTs2)<5000;
- if(!isAdminOrigin&&!_isOwnUpload){
+ if(!isAdminOrigin&&!_isOwnUpload&&meta.by!==_DEV_ID){
  const fbInward=await fbGet('inward');
  if(Array.isArray(fbInward)&&fbInward.length){
  inwardData=fbInward;
@@ -3810,8 +3813,10 @@ function startPOMetaPoll(){
  if(!fbConfig)return;
  checkPOMeta();
  poMetaTimer=setInterval(checkPOMeta,12000);
+ _startMetaSSE('po_meta',checkPOMeta);
+ startSTOMetaPoll();
 }
-function stopPOMetaPoll(){if(poMetaTimer){clearInterval(poMetaTimer);poMetaTimer=null;}}
+function stopPOMetaPoll(){if(poMetaTimer){clearInterval(poMetaTimer);poMetaTimer=null;}_stopMetaSSE('po_meta');stopSTOMetaPoll();}
 
 async function checkPOMeta(){
  if(!fbConfig||!isOnline)return;
@@ -3876,6 +3881,116 @@ async function checkPOMeta(){
  }catch(e){}
 }
 
+// ===================== LIVE PUSH for PO / Inward / STO uploads =====================
+// Each upload writes a tiny "<x>_meta" record. Devices hold a live stream (SSE) on that record and
+// react within ~1s. The old interval polling is kept as a fallback if the stream is blocked.
+const _DEV_ID='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const _metaLive={};
+function _startMetaSSE(node,handler){
+ _stopMetaSSE(node);
+ if(!fbConfig||typeof EventSource==='undefined')return;
+ const st={es:null,retry:0,timer:null,fireTimer:null,closed:false};
+ _metaLive[node]=st;
+ const connect=()=>{
+  if(st.closed||!fbConfig)return;
+  const backoff=()=>{st.retry=Math.min(st.retry+1,6);st.timer=setTimeout(connect,Math.min(60000,3000*Math.pow(2,st.retry-1)));};
+  try{
+   const es=new EventSource(fbUrl(node));
+   st.es=es;
+   const fire=()=>{st.retry=0;clearTimeout(st.fireTimer);st.fireTimer=setTimeout(()=>{try{handler();}catch(e){}},150);};
+   es.addEventListener('put',fire);
+   es.addEventListener('patch',fire);
+   // EventSource reconnects by itself after a network blip; rebuild it only if the browser gave up.
+   es.onerror=()=>{if(es.readyState===2){try{es.close();}catch(e){}if(!st.closed)backoff();}};
+  }catch(e){backoff();}
+ };
+ connect();
+}
+function _stopMetaSSE(node){
+ const st=_metaLive[node];if(!st)return;
+ st.closed=true;clearTimeout(st.timer);clearTimeout(st.fireTimer);
+ if(st.es){try{st.es.close();}catch(e){}}
+ delete _metaLive[node];
+}
+// Announce an upload only AFTER the bulk data has really landed in Firebase, so other devices never fetch a stale copy.
+function _putMetaWhenFlushed(dataPath,metaPath,metaObj){
+ const t0=Date.now();
+ const iv=setInterval(()=>{
+  if(!writeQueue.some(w=>w.path===dataPath)||Date.now()-t0>90000){
+   clearInterval(iv);
+   fbPut(metaPath,Object.assign({ts:Date.now()},metaObj));
+  }
+ },700);
+}
+
+let lastKnownStoMetaTs=0,stoMetaTimer=null,_stoMetaRetries=0;
+function startSTOMetaPoll(){
+ stopSTOMetaPoll();
+ if(!fbConfig)return;
+ checkSTOMeta();
+ stoMetaTimer=setInterval(checkSTOMeta,30000);
+ _startMetaSSE('sto_meta',checkSTOMeta);
+}
+function stopSTOMetaPoll(){if(stoMetaTimer){clearInterval(stoMetaTimer);stoMetaTimer=null;}_stopMetaSSE('sto_meta');}
+async function checkSTOMeta(){
+ if(!fbConfig||!isOnline)return;
+ try{
+  const meta=await fbGet('sto_meta');
+  if(!meta||!meta.ts)return;
+  // First look after connecting: the full pull already loaded STO, so just remember this point.
+  if(lastKnownStoMetaTs===0){lastKnownStoMetaTs=meta.ts;return;}
+  if(meta.ts<=lastKnownStoMetaTs)return;
+  lastKnownStoMetaTs=meta.ts;
+  if(meta.status==='cleared'){
+   stoData=[];LS.remove('sto');LS.save('sto_cleared',true);
+   updateHeaderStats();debouncedSync('adminRefresh',refreshActiveAdminPage,300);
+   setBanner('connected','🗑 STO data cleared');
+   setTimeout(()=>setBanner('connected','✅ Firebase live · '+scannedAll.length+' scans'),4000);
+   return;
+  }
+  if(meta.status!=='set')return;
+  if(meta.by&&meta.by===_DEV_ID)return; // our own upload
+  // never overwrite local STO rows that are still waiting to upload
+  if(writeQueue.some(w=>w.path==='sto')){lastKnownStoMetaTs=meta.ts-1;setTimeout(checkSTOMeta,5000);return;}
+  let arr=[];
+  const delays=[1500,3000,6000,12000];
+  for(let a=0;a<=delays.length;a++){
+   const fb=await fbGet('sto');
+   arr=Array.isArray(fb)?fb.filter(Boolean):(fb&&typeof fb==='object'?Object.values(fb).filter(Boolean):[]);
+   if(arr.length&&(meta.count==null||arr.length===meta.count))break;
+   if(a<delays.length)await new Promise(r=>setTimeout(r,delays[a]));
+  }
+  if(!arr.length){
+   if(++_stoMetaRetries<=5){lastKnownStoMetaTs=meta.ts-1;setTimeout(checkSTOMeta,15000);}
+   return;
+  }
+  _stoMetaRetries=0;
+  stoData=arr;LS.save('sto',stoData);LS.remove('sto_cleared');
+  updateHeaderStats();debouncedSync('adminRefresh',refreshActiveAdminPage,300);
+  setBanner('connected','📦 STO data updated · '+stoData.length+' rows');
+  setTimeout(()=>setBanner('connected','✅ Firebase live · '+scannedAll.length+' scans'),5000);
+ }catch(e){}
+}
+// ===================== end LIVE PUSH =====================
+
+// Merge freshly-fetched inward rows into inwardData. A row missing from this batch is dropped
+// ONLY if it came from the same origin as this batch (_gs1 for Sheet 1, _gs2 for Sheet 2), so a
+// Sheet-1 fetch can never wipe Sheet-2 or manually-uploaded rows, and vice versa. This is what
+// makes edits/deletions made in the actual Google Sheet show up, instead of leaving old rows stuck.
+function _mergeInwardFromSheet(data){
+ const _ck=r=>(r.poNo||'')+'||'+(r.invNo||'');
+ const newKeys=new Set(data.map(_ck).filter(k=>k!=='||'));
+ const origin=data.length&&data[0]._gs2?'_gs2':(data.length&&data[0]._gs1?'_gs1':null);
+ const kept=inwardData.filter(r=>{
+ const k=_ck(r);
+ if(k==='||')return true;
+ if(newKeys.has(k))return false; // will be replaced by the matching row in `data` below
+ if(origin&&r[origin])return false; // stale row from this same sheet — no longer present, drop it
+ return true; // different origin (or a manual upload) — never touched by this sheet's fetch
+ });
+ inwardData=[...kept,...data];
+ return inwardData;
+}
 function debouncedSync(key,fn,ms=800){clearTimeout(syncDebounceTimers[key]);syncDebounceTimers[key]=setTimeout(fn,ms);}
 
 function refreshActiveAdminPage(){
@@ -4434,11 +4549,7 @@ function confirmUpload(){
  },2000);
  }
  }else if(type==='inward'){
- // Unique key = PO No. + Invoice No. composite
- const _ck=r=>(r.poNo||'')+'||'+(r.invNo||'');
- const newKeys=new Set(data.map(_ck).filter(k=>k!=='||'));
- const kept=inwardData.filter(r=>r._gs2?!newKeys.has(_ck(r)):(_ck(r)!=='||'&&!newKeys.has(_ck(r))));
- inwardData=[...kept,...data];
+ _mergeInwardFromSheet(data);
  LS.save('inward',inwardData);LS.save('inward_fname',fname);
  LS.remove('inward_cleared');
  document.getElementById('inward-name').textContent=fname;
@@ -4451,7 +4562,7 @@ function confirmUpload(){
  if(fbConfig){
  queueWrite('inward',inwardData);
 
- fbPut('inward_meta',{status:'set',ts:Date.now(),count:inwardData.length,uploadedBy:currentUser&&currentUser.username?currentUser.username:'admin'});
+ _putMetaWhenFlushed('inward','inward_meta',{status:'set',count:inwardData.length,uploadedBy:currentUser&&currentUser.username?currentUser.username:'admin',by:_DEV_ID});
  }
  }
  updateHeaderStats();
@@ -4932,6 +5043,7 @@ function processGSheetInwardRows(rows,silent){
  id:'inv'+Date.now()+i,
  srNo:i+1,
  _sourceSheet:r._sourceSheet||'',
+ _gs1:true, // flag: came from Sheet 1
  date: fmtDate(get(r,GSHEET_INWARD_COLS.date)),
  vendorName: get(r,GSHEET_INWARD_COLS.vendorName),
  poNo: getRaw(r,GSHEET_INWARD_COLS.poNo),
@@ -4978,8 +5090,10 @@ function processGSheetInwardRows(rows,silent){
  const _key=r=>(r.poNo||'')+'||'+(r.invNo||'');
  const newKeys=new Set(data.map(_key).filter(k=>k!=='||'));
  const kept=inwardData.filter(r=>{
- if(r._gs2)return!newKeys.has(_key(r)); // preserve Sheet 2 rows not covered by Sheet 1
- return _key(r)!=='||'&&!newKeys.has(_key(r)); // preserve non-Sheet-2 rows not in this batch
+ if(newKeys.has(_key(r)))return false; // will be replaced by `merged` below
+ if(r._gs2)return true; // Sheet 2 rows are never touched by a Sheet 1 fetch
+ if(r._gs1)return false; // stale Sheet-1 row no longer in the sheet — drop it (was a bug: used to linger forever)
+ return true; // untagged = manual upload, never touched by a Google Sheet fetch
  });
  const merged=data.map(newRow=>{
  if(!newRow.poNo&&!newRow.invNo)return newRow;
@@ -5004,7 +5118,7 @@ function processGSheetInwardRows(rows,silent){
 
  if(fbConfig&&currentUser&&currentUser.type==='admin'){
  queueWrite('inward',inwardData);
- fbPut('inward_meta',{status:'set',ts:Date.now(),count:inwardData.length,uploadedBy:'auto-gsheet'});
+ _putMetaWhenFlushed('inward','inward_meta',{status:'set',count:inwardData.length,uploadedBy:'auto-gsheet',by:_DEV_ID});
  }
  return;
  }
@@ -5183,7 +5297,11 @@ function _processGSheet2Rows(rows,silent){
  };
  });
 
- const kept=inwardData.filter(r=>!r._gs2||_key2(r)==='||'||!newKeys2.has(_key2(r)));
+ const kept=inwardData.filter(r=>{
+ if(newKeys2.has(_key2(r)))return false; // will be replaced by `merged` below
+ if(r._gs2)return false; // stale Sheet-2 row no longer in the sheet — drop it (was a bug: used to linger forever)
+ return true; // Sheet-1 rows and manual uploads are never touched by a Sheet 2 fetch
+ });
  inwardData=[...kept,...merged];
  LS.save('inward',inwardData);
  LS.save('inward_fname','Sheet 1 + Sheet 2');
@@ -5198,7 +5316,7 @@ function _processGSheet2Rows(rows,silent){
  refreshInvNoDropdown(activePO||undefined);
  if(fbConfig&&currentUser&&currentUser.type==='admin'){
  queueWrite('inward',inwardData);
- fbPut('inward_meta',{status:'set',ts:Date.now(),count:inwardData.length,uploadedBy:'auto-gsheet2'});
+ _putMetaWhenFlushed('inward','inward_meta',{status:'set',count:inwardData.length,uploadedBy:'auto-gsheet2',by:_DEV_ID});
  }
  if(!silent){setGSheet2Status('✅ '+data.length+' rows from Sheet 2 merged into register','ok');}
  const gs2StatusEl=document.getElementById('gs2-sync-status');
@@ -5471,13 +5589,18 @@ async function fetchGSheetSto(silent){
  return;
  }
 
+ // Rebuild from the sheet instead of only merging into the old list — otherwise a row that was
+ // edited, corrected, or deleted in the Google Sheet stayed stuck with its old values forever,
+ // since merge-only logic never removed or fully replaced a row.
+ const _oldBySto=new Map(stoData.map(x=>[x.stoNo,x]));
+ const _fresh=new Map(); // last row wins if the sheet has duplicate STO Nos, same as before
  allRows.forEach(nr=>{
- const idx=stoData.findIndex(x=>x.stoNo&&x.stoNo===nr.stoNo);
- if(idx>=0){stoData[idx]={...stoData[idx],...nr,id:stoData[idx].id};}
- else{stoData.push(nr);}
+ const old=_oldBySto.get(nr.stoNo);
+ _fresh.set(nr.stoNo,old?{...nr,id:old.id}:nr);
  });
+ stoData=[..._fresh.values()];
  LS.save('sto',stoData);
- if(typeof queueWrite==='function'&&typeof fbConfig!=='undefined'&&fbConfig)queueWrite('sto',stoData);
+ if(typeof queueWrite==='function'&&typeof fbConfig!=='undefined'&&fbConfig){queueWrite('sto',stoData);_putMetaWhenFlushed('sto','sto_meta',{status:'set',count:stoData.length,by:_DEV_ID});}
  const summary=sheetNames.length>1?'✅ '+allRows.length+' rows from '+sheetNames.length+' sheets':'✅ Fetched '+allRows.length+' STO rows';
  if(statusEl)statusEl.textContent=summary;
  _stoStatusMsg(summary,true);
